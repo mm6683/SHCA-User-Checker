@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>SHCA User Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Added axios CDN -->
     <style>
         body {
             background-color: #121212;
@@ -107,8 +108,9 @@
             }
 
             try {
-                const res = await fetch(`https://shca-user-checker.onrender.com/user/${userId}`);
-                const userData = await res.json();
+                // Replaced fetch with axios
+                const res = await axios.get(`https://shca-user-checker.onrender.com/user/${userId}`);
+                const userData = res.data;
 
                 if (!userData) {
                     result.innerHTML = "❌ Failed to fetch user data from server.";
@@ -186,7 +188,7 @@
         async function getUserIDFromUsername(name) {
             try {
                 const cleanedName = name.replace(/^@/, "").trim();
-                const res = await fetch(`https://www.roblox.com/users/profile?username=${cleanedName}`);
+                const res = await axios.get(`https://www.roblox.com/users/profile?username=${cleanedName}`);
                 if (!res.ok) throw new Error("Invalid response");
                 const match = res.url.match(/\/users\/(\d+)\//);
                 if (!match) throw new Error("User ID not found in URL");
