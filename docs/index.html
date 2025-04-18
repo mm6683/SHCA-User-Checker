@@ -170,11 +170,6 @@
                     return "Just now";
                 }
 
-                // Check if the user is banned
-                const banRes = await fetch(`https://users.roblox.com/v1/users/${userId}/banned`);
-                const banStatus = await banRes.json();
-                const isBanned = banStatus.isBanned || false;
-
                 let html = `
                     <div class="profile-header">
                         <img src="${avatarUrl}">
@@ -190,11 +185,6 @@
                     </div>
                     <div class="divider"></div>
                 `;
-
-                // Only show ban message if the user is banned
-                if (isBanned) {
-                    html += `<div class="group-entry"><div style="color: red;">❌ This user is currently banned from Roblox.</div></div>`;
-                }
 
                 const asylum = groupData.find(g => g.group.id === 5819563);
                 if (asylum) {
