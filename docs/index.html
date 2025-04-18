@@ -108,7 +108,18 @@
 
             try {
                 const res = await fetch(`https://shca-user-checker.onrender.com/user/${userId}`);
+                
+                // Log the response for debugging
+                console.log('Response:', res);
+
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch data: ${res.status}`);
+                }
+
                 const userData = await res.json();
+
+                // Log the response data for debugging
+                console.log('User Data:', userData);
 
                 // Check if userData and userData.user exist before accessing displayName
                 if (!userData || !userData.user) {
@@ -178,7 +189,7 @@
 
                 result.innerHTML = html;
             } catch (err) {
-                console.error(err);
+                console.error("Error fetching data:", err);
                 result.innerHTML = "❌ Failed to load data.";
             }
         }
