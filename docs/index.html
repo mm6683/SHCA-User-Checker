@@ -92,20 +92,6 @@
     </div>
 
     <script>
-        async function getUserIDFromUsername(name) {
-            try {
-                const cleanedName = name.replace(/^@/, "").trim();
-                const res = await fetch(`https://www.roblox.com/users/profile?username=${cleanedName}`);
-                if (!res.ok) throw new Error("Invalid response");
-                const match = res.url.match(/\/users\/(\d+)\//);
-                if (!match) throw new Error("User ID not found in URL");
-                return match[1];
-            } catch (err) {
-                console.error("Failed to get user ID:", err);
-                return null;
-            }
-        }
-
         async function fetchUserData() {
             let input = document.getElementById("userIdInput").value.trim();
             const result = document.getElementById("result");
@@ -121,33 +107,18 @@
             }
 
             try {
-                const [userRes, groupsRes, friendsRes] = await Promise.all([ 
-                    fetch(`https://users.roblox.com/v1/users/${userId}`),
-                    fetch(`https://groups.roblox.com/v1/users/${userId}/groups/roles`),
-                    fetch(`https://friends.roblox.com/v1/users/${userId}/friends`)
-                ]);
+                const res = await fetch(`https://shca-user-checker.onrender.com/user/${userId}`);
+                const userData = await res.json();
 
-                const user = await userRes.json();
+                if (!userData) {
+                    result.innerHTML = "❌ Failed to fetch user data from server.";
+                    return;
+                }
 
-                const thumbnail = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`).then(res => res.json());
-                const avatarUrl = thumbnail.data[0]?.imageUrl;
-
-                const groupData = (await groupsRes.json()).data;
-                const friendData = (await friendsRes.json()).data;
-
-                const targetGroups = [
-                    { id: 5819563, name: "Stone-Haven County Asylum" },
-                    { id: 35174249, name: "in the <strong>Stone-Haven Moderation Department</strong>" },
-                    { id: 8905914, name: "<strong>Stone-Haven Orderly Staff</strong>" },
-                    { id: 5819663, name: "<strong>Stone-Haven Medical Staff</strong>" },
-                    { id: 8959084, name: "in the <strong>Stone-Haven Department of Psychiatry</strong>" },
-                    { id: 14952106, name: "in the <strong>Stone-Haven Community Relations Department</strong>" },
-                    { id: 15505394, name: "in the <strong>Stone-Haven Maintenance Department</strong>" }
-                ];
-
-                const groupIds = targetGroups.map(g => g.id);
-                const logosRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${groupIds.join(",")}&size=150x150&format=Png&isCircular=false`);
-                const logos = (await logosRes.json()).data.reduce((acc, cur) => (acc[cur.targetId] = cur.imageUrl, acc), {});
+                const avatarUrl = userData.avatarUrl;
+                const user = userData.user;
+                const groupData = userData.groups;
+                const logos = userData.groupLogos;
 
                 function timeAgo(date) {
                     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -177,7 +148,7 @@
                             <strong>${user.displayName}</strong><br>
                             <div>@${user.name}</div>
                             <div class="small">User ID: ${user.id}</div>
-                            <div class="small">Friends: ${friendData.length}</div>
+                            <div class="small">Friends: ${user.friendCount}</div>
                             <div class="small">Groups: ${groupData.length}</div>
                             <div class="small">Account Created: ${new Date(user.created).toLocaleDateString()} (${timeAgo(user.created)})</div>
                             <a href="https://www.roblox.com/users/${user.id}/profile" target="_blank" class="small-button">🔗 View Profile</a>
@@ -186,20 +157,17 @@
                     <div class="divider"></div>
                 `;
 
-                const asylum = groupData.find(g => g.group.id === 5819563);
+                const asylum = groupData.find(g => g.id === 5819563);
                 if (asylum) {
-                    html += `<div class="group-entry"><img src="${logos[5819563]}"><div>✅ User <strong>is</strong> part of the Stone-Haven County Asylum Community.<br><strong>Rank:</strong> ${asylum.role.name}</div></div>`;
+                    html += `<div class="group-entry"><img src="${logos[5819563]}"><div>✅ User <strong>is</strong> part of the Stone-Haven County Asylum Community.<br><strong>Rank:</strong> ${asylum.role}</div></div>`;
                 } else {
                     html += `<div class="group-entry"><img src="${logos[5819563]}"><div>❌ User <strong>isn't</strong> part of the Stone-Haven County Asylum Community.</div></div>`;
                 }
 
                 html += `<div class="divider"></div>`;
 
-                for (const group of targetGroups.slice(1)) {
-                    const member = groupData.find(g => g.group.id === group.id);
-                    if (member) {
-                        html += `<div class="group-entry"><img src="${logos[group.id]}"><div>User is ${group.name} | <strong>${member.role.name}</strong></div></div>`;
-                    }
+                for (const group of groupData.slice(1)) {
+                    html += `<div class="group-entry"><img src="${logos[group.id]}"><div>User is in the <strong>${group.name}</strong> | <strong>${group.role}</strong></div></div>`;
                 }
 
                 result.innerHTML = html;
@@ -214,6 +182,20 @@
                 fetchUserData();
             }
         });
+
+        async function getUserIDFromUsername(name) {
+            try {
+                const cleanedName = name.replace(/^@/, "").trim();
+                const res = await fetch(`https://www.roblox.com/users/profile?username=${cleanedName}`);
+                if (!res.ok) throw new Error("Invalid response");
+                const match = res.url.match(/\/users\/(\d+)\//);
+                if (!match) throw new Error("User ID not found in URL");
+                return match[1];
+            } catch (err) {
+                console.error("Failed to get user ID:", err);
+                return null;
+            }
+        }
     </script>
 </body>
 </html>
