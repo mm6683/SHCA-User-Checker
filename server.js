@@ -1,43 +1,57 @@
-const express = require("express");
-const fetch = require("node-fetch");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 
-// Endpoint: GET /userinfo?username=USERNAME
-app.get("/userinfo", async (req, res) => {
-  const username = req.query.username;
-  if (!username) return res.status(400).json({ error: "Username is required" });
+app.get('/user/:id', async (req, res) => {
+    const userId = req.params.id;
+    const user = {};
+    const groups = [];
+    const logos = {};
 
-  try {
-    // Step 1: Get user ID from username
-    const userRes = await fetch(`https://users.roblox.com/v1/usernames/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usernames: [username] })
-    });
+    try {
+        // Get user info
+        const userInfoRes = await axios.get(`https://users.roblox.com/v1/users/${userId}`);
+        Object.assign(user, userInfoRes.data);
 
-    if (!userRes.ok) throw new Error("Failed to fetch user ID");
+        // Get friends count
+        const friendsRes = await axios.get(`https://friends.roblox.com/v1/users/${userId}/friends/count`);
+        user.friendCount = friendsRes.data.count;
 
-    const userData = await userRes.json();
-    const user = userData.data?.[0];
-    if (!user) return res.status(404).json({ error: "User not found" });
+        // Get avatar URL
+        const avatarRes = await axios.get(`https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=150x150&format=Png&isCircular=true`);
+        const avatarUrl = avatarRes.data.data[0].imageUrl;
 
-    // Step 2: Return user info
-    res.json({
-      id: user.id,
-      name: user.name,
-      displayName: user.displayName
-    });
-  } catch (err) {
-    console.error("Error:", err.message);
-    res.status(500).json({ error: "Server error" });
-  }
+        // Get groups
+        const groupRes = await axios.get(`https://groups.roblox.com/v2/users/${userId}/groups/roles`);
+        for (const group of groupRes.data.data) {
+            groups.push({
+                id: group.group.id,
+                name: group.group.name,
+                role: group.role.name
+            });
+        }
+
+        // Get logos for all groups (only logos needed)
+        const groupIds = groups.map(g => g.id).join(',');
+        if (groupIds.length > 0) {
+            const logoRes = await axios.get(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${groupIds}&size=100x100&format=Png&isCircular=false`);
+            for (const entry of logoRes.data.data) {
+                logos[entry.targetId] = entry.imageUrl;
+            }
+        }
+
+        res.json({ user, avatarUrl, groups, groupLogos: logos });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Failed to retrieve user data', details: err.message });
+    }
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`✅ Backend running on port ${PORT}`);
 });
