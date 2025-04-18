@@ -1,25 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-// Serve static files from the "docs" folder
-app.use(express.static(path.join(__dirname, 'docs')));
+// Endpoint: GET /userinfo?username=USERNAME
+app.get("/userinfo", async (req, res) => {
+  const username = req.query.username;
+  if (!username) return res.status(400).json({ error: "Username is required" });
 
-// Set up a basic route for the API (optional, for now)
-app.get('/api/test', (req, res) => {
-    res.json({ message: "API is working!" });
+  try {
+    // Step 1: Get user ID from username
+    const userRes = await fetch(`https://users.roblox.com/v1/usernames/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usernames: [username] })
+    });
+
+    if (!userRes.ok) throw new Error("Failed to fetch user ID");
+
+    const userData = await userRes.json();
+    const user = userData.data?.[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Step 2: Return user info
+    res.json({
+      id: user.id,
+      name: user.name,
+      displayName: user.displayName
+    });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-// Catch-all handler to serve index.html for any route
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'docs', 'index.html'));
-});
-
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
