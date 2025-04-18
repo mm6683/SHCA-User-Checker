@@ -1,12 +1,16 @@
 {
-  "name": "my-project",
+  "name": "shca-user-checker",
   "version": "1.0.0",
+  "description": "A simple web-based user checker for SHCA users.",
+  "main": "server.js",
   "scripts": {
-    "start-backend": "cd backend && npm install && npm start",
-    "start-frontend": "cd frontend && live-server", // Assuming you are using live-server or similar for frontend
-    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\""
+    "start": "node server.js",
+    "build": "npm install"
   },
   "dependencies": {
-    "concurrently": "^7.0.0"
-  }
+    "express": "^4.17.1",
+    "live-server": "^1.2.0"
+  },
+  "author": "mm6683",
+  "license": "MIT"
 }
