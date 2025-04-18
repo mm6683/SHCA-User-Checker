@@ -110,13 +110,19 @@
                 const res = await fetch(`https://shca-user-checker.onrender.com/user/${userId}`);
                 const userData = await res.json();
 
+                // Check if userData and userData.user exist before accessing displayName
                 if (!userData || !userData.user) {
                     result.innerHTML = "❌ Failed to fetch user data from server.";
                     return;
                 }
 
-                const avatarUrl = userData.avatarUrl;
                 const user = userData.user;
+                if (!user.displayName) {
+                    result.innerHTML = "❌ User has no display name.";
+                    return;
+                }
+
+                const avatarUrl = userData.avatarUrl;
                 const groupData = userData.groups;
                 const logos = userData.groupLogos;
 
@@ -139,12 +145,6 @@
                         }
                     }
                     return "Just now";
-                }
-
-                // Ensure the user object exists and has a displayName
-                if (!user.displayName) {
-                    result.innerHTML = "❌ User has no display name.";
-                    return;
                 }
 
                 let html = `
