@@ -266,11 +266,12 @@
                     html += `<div class="group-entry"><div style="color: red;">❌ This user is currently banned from Roblox.</div></div>`;
                 }
 
-                const asylum = groupData.find(g => g.group.id === 6481206);
+                const staffCommunityId = targetGroups[0].id;
+                const asylum = groupData.find(g => g.group.id === staffCommunityId);
                 if (asylum) {
-                    html += `<div class="group-entry"><img src="${logos[11882330]}"><div>✅ User <strong>is</strong> part of the SHCA Staff Teams community.<br><strong>Rank:</strong> ${asylum.role.name}</div></div>`;
+                    html += `<div class="group-entry"><img src="${logos[staffCommunityId]}"><div>✅ User <strong>is</strong> part of the SHCA Staff Teams community.<br><strong>Rank:</strong> ${asylum.role.name}</div></div>`;
                 } else {
-                    html += `<div class="group-entry"><img src="${logos[11882330]}"><div>❌ User <strong>isn't</strong> part of the SHCA Staff Teams community.</div></div>`;
+                    html += `<div class="group-entry"><img src="${logos[staffCommunityId]}"><div>❌ User <strong>isn't</strong> part of the SHCA Staff Teams community.</div></div>`;
                 }
 
                 html += `<div class="divider"></div>`;
