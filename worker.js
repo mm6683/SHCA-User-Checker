@@ -1,7 +1,7 @@
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Methods": "GET,HEAD,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,HEAD,OPTIONS,POST",
 };
 
 const TARGETS = {
@@ -24,16 +24,22 @@ async function handleProxy(request, env) {
     return new Response("Unknown proxy service", { status: 400, headers: CORS_HEADERS });
   }
 
-  if (!["GET", "HEAD"].includes(request.method)) {
+  if (!["GET", "HEAD", "POST"].includes(request.method)) {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
   const targetUrl = new URL(`/${rest.join("/")}${url.search}`, TARGETS[service]);
-  const outbound = new Request(targetUrl.toString(), {
+  const outboundInit = {
     method: request.method,
     headers: request.headers,
     redirect: "follow",
-  });
+  };
+
+  if (request.method === "POST") {
+    outboundInit.body = request.body;
+  }
+
+  const outbound = new Request(targetUrl.toString(), outboundInit);
 
   const response = await fetch(outbound);
   const headers = new Headers(response.headers);
