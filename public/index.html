@@ -272,7 +272,7 @@
                             <div class="small">User ID: ${user.id}</div>
                             <div class="small">Connections: ${friendCount}</div>
                             <div class="small">Communities: ${groupData.length}</div>
-                            <div class="small">Account Created: ${new Date(user.created).toLocaleDateString()} (${timeAgo(user.created)})</div>
+                            <div class="small">Account Created: ${new Date(user.created).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} (${timeAgo(user.created)})</div>
                             ${usernamesHtml}
                             <a href="https://www.roblox.com/users/${user.id}/profile" target="_blank" class="small-button">🔗 View Profile</a>
                         </div>
