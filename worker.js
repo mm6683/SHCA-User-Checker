@@ -52,12 +52,25 @@ async function handleProxy(request, env) {
   });
 }
 
+function serveSPA(request, env) {
+  if (!env.ASSETS || typeof env.ASSETS.fetch !== "function") {
+    return new Response("Static assets binding not configured", { status: 500 });
+  }
+
+  const spaRequest = new Request(new URL("/", request.url), request);
+  return env.ASSETS.fetch(spaRequest);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith("/proxy/")) {
       return handleProxy(request, env);
+    }
+
+    if (url.pathname.startsWith("/username/") || url.pathname.startsWith("/userid/")) {
+      return serveSPA(request, env);
     }
 
     return env.ASSETS.fetch(request);

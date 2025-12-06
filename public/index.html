@@ -157,8 +157,9 @@
             }
         }
 
-        async function fetchUserData() {
-            let input = document.getElementById("userIdInput").value.trim();
+        async function fetchUserData(initialInput = null) {
+            const inputElement = document.getElementById("userIdInput");
+            let input = (initialInput ?? inputElement.value).trim();
             const result = document.getElementById("result");
             result.innerHTML = "Loading...";
 
@@ -169,6 +170,10 @@
             if (!userId) {
                 result.innerHTML = "❌ Failed to find user by username.";
                 return;
+            }
+
+            if (!initialInput) {
+                inputElement.value = input;
             }
 
             let isBanned = false;
@@ -302,6 +307,11 @@
                 }
 
                 result.innerHTML = html;
+
+                const targetPath = `/userid/${userId}`;
+                if (window.location.pathname !== targetPath) {
+                    window.history.replaceState({}, "", targetPath);
+                }
             } catch (err) {
                 console.error(err);
                 result.innerHTML = "❌ Failed to load data.";
@@ -314,7 +324,28 @@
             }
         });
 
-        window.addEventListener("load", setFavicon);
+        function handleInitialPath() {
+            const path = window.location.pathname;
+            const userIdMatch = path.match(/^\/userid\/(\d+)\/?$/);
+            if (userIdMatch) {
+                const userId = userIdMatch[1];
+                document.getElementById("userIdInput").value = userId;
+                fetchUserData(userId);
+                return;
+            }
+
+            const usernameMatch = path.match(/^\/username\/(.+)\/?$/);
+            if (usernameMatch) {
+                const username = decodeURIComponent(usernameMatch[1]);
+                document.getElementById("userIdInput").value = username;
+                fetchUserData(username);
+            }
+        }
+
+        window.addEventListener("load", () => {
+            setFavicon();
+            handleInitialPath();
+        });
     </script>
 </body>
 </html>
