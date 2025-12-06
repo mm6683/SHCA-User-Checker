@@ -128,13 +128,25 @@
         async function getUserIDFromUsername(name) {
             try {
                 const cleanedName = name.replace(/^@/, "").replace(/[()]/g, "").trim();
-                const res = await fetch(
-                    proxyUrl("www", "/users/profile", `username=${encodeURIComponent(cleanedName)}`)
-                );
+                const res = await fetch(proxyUrl("users", "/v1/usernames/users"), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        usernames: [cleanedName],
+                        excludeBannedUsers: false
+                    })
+                });
+
                 if (!res.ok) throw new Error("Invalid response");
-                const match = res.url.match(/\/users\/(\d+)\//);
-                if (!match) throw new Error("User ID not found in URL");
-                return match[1];
+
+                const data = await res.json();
+                const user = data.data?.[0];
+
+                if (!user?.id) throw new Error("User ID not found in lookup response");
+
+                return user.id;
             } catch (err) {
                 console.error("Failed to get user ID:", err);
                 return null;
