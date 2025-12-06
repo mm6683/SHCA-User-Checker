@@ -4,6 +4,7 @@
   "private": true,
   "description": "Static SHCA User Checker for Roblox",
   "scripts": {
+    "dev": "wrangler dev",
     "build": "echo \"Static site - no build step needed\"",
     "deploy": "wrangler deploy"
   },

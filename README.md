@@ -5,7 +5,14 @@ A static, single-page tool for checking Stone-Haven County Asylum user details o
 
 ## Running locally
 
-Simply open `public/index.html` in a modern browser. All requests go directly to Roblox endpoints; no build step or server is required.
+Use the built-in Worker to avoid CORS errors when calling Roblox APIs:
+
+```bash
+npm install
+npm run dev
+```
+
+Wrangler will serve the static assets and forward `/proxy/...` requests to Roblox with permissive CORS headers.
 
 ## Deploying to Cloudflare Pages
 
@@ -16,8 +23,7 @@ Simply open `public/index.html` in a modern browser. All requests go directly to
 
 ## Deploying with Wrangler (if using the existing deploy command)
 
-The included `wrangler.jsonc` points to the `public/` folder as the assets directory. Running `npm run deploy` (or `npx wrangler deploy`)
- will deploy the static assets using that configuration.
+The included `wrangler.jsonc` points to the `public/` folder as the assets directory and enables a Worker proxy for Roblox requests. Running `npm run deploy` (or `npx wrangler deploy`) will deploy the static assets and the proxy Worker using that configuration.
 
 ## Notes
 

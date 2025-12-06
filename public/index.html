@@ -95,9 +95,22 @@
     </div>
 
     <script>
+        const API_BASE = "/proxy";
+
+        function proxyUrl(service, path, queryString = "") {
+            const query = queryString ? `?${queryString}` : "";
+            return `${API_BASE}/${service}${path}${query}`;
+        }
+
         async function setFavicon() {
             try {
-                const groupLogoRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=10275842&size=150x150&format=Png&isCircular=false`);
+                const groupLogoRes = await fetch(
+                    proxyUrl(
+                        "thumbnails",
+                        "/v1/groups/icons",
+                        "groupIds=10275842&size=150x150&format=Png&isCircular=false"
+                    )
+                );
                 const logoData = await groupLogoRes.json();
                 const logoUrl = logoData.data[0]?.imageUrl;
 
@@ -115,7 +128,9 @@
         async function getUserIDFromUsername(name) {
             try {
                 const cleanedName = name.replace(/^@/, "").replace(/[()]/g, "").trim();
-                const res = await fetch(`https://www.roblox.com/users/profile?username=${cleanedName}`);
+                const res = await fetch(
+                    proxyUrl("www", "/users/profile", `username=${encodeURIComponent(cleanedName)}`)
+                );
                 if (!res.ok) throw new Error("Invalid response");
                 const match = res.url.match(/\/users\/(\d+)\//);
                 if (!match) throw new Error("User ID not found in URL");
@@ -148,14 +163,20 @@
 
             try {
                 const [userRes, groupsRes, friendsRes, usernameHistoryRes] = await Promise.all([
-                    fetch(`https://users.roblox.com/v1/users/${userId}`),
-                    fetch(`https://groups.roblox.com/v1/users/${userId}/groups/roles`),
-                    fetch(`https://friends.roblox.com/v1/users/${userId}/friends/count`),
-                    fetch(`https://users.roblox.com/v1/users/${userId}/username-history`)
+                    fetch(proxyUrl("users", `/v1/users/${userId}`)),
+                    fetch(proxyUrl("groups", `/v1/users/${userId}/groups/roles`)),
+                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`)),
+                    fetch(proxyUrl("users", `/v1/users/${userId}/username-history`))
                 ]);
 
                 const user = await userRes.json();
-                const thumbnail = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`).then(res => res.json());
+                const thumbnail = await fetch(
+                    proxyUrl(
+                        "thumbnails",
+                        "/v1/users/avatar-headshot",
+                        `userIds=${userId}&size=150x150&format=Png&isCircular=true`
+                    )
+                ).then(res => res.json());
                 const avatarUrl = thumbnail.data[0]?.imageUrl;
 
                 const groupData = (await groupsRes.json()).data;
@@ -182,7 +203,13 @@
                 ];
 
                 const groupIds = targetGroups.map(g => g.id);
-                const logosRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${groupIds.join(",")}&size=150x150&format=Png&isCircular=false`);
+                const logosRes = await fetch(
+                    proxyUrl(
+                        "thumbnails",
+                        "/v1/groups/icons",
+                        `groupIds=${groupIds.join(",")}&size=150x150&format=Png&isCircular=false`
+                    )
+                );
                 const logos = (await logosRes.json()).data.reduce((acc, cur) => (acc[cur.targetId] = cur.imageUrl, acc), {});
 
                 function timeAgo(date) {
