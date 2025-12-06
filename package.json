@@ -1,18 +1,13 @@
 {
   "name": "shca-user-checker",
   "version": "1.0.0",
-  "description": "A simple web-based user checker for SHCA users.",
-  "main": "server.js",
+  "private": true,
+  "description": "Static SHCA User Checker for Roblox",
   "scripts": {
-    "start": "node server.js",
-    "build": "npm install"
+    "build": "echo \"Static site - no build step needed\"",
+    "deploy": "wrangler deploy"
   },
-  "dependencies": {
-    "axios": "^1.6.7",
-    "express": "^4.17.1",
-    "node-fetch": "^2.6.11",
-    "cors": "^2.8.5"
-  },
-  "author": "mm6683",
-  "license": "MIT"
+  "devDependencies": {
+    "wrangler": "^4.53.0"
+  }
 }
