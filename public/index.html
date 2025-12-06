@@ -157,8 +157,19 @@
             }
         }
 
+        function clearUsernamePath() {
+            if (window.location.pathname.startsWith("/username/")) {
+                window.history.replaceState({}, "", "/");
+            }
+        }
+
         async function fetchUserData(initialInput = null) {
             const inputElement = document.getElementById("userIdInput");
+
+            if (!initialInput) {
+                clearUsernamePath();
+            }
+
             let input = (initialInput ?? inputElement.value).trim();
             const result = document.getElementById("result");
             result.innerHTML = "Loading...";
