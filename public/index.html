@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>SHCA User Checker</title>
-    <link id="favicon" rel="icon" href="">
+    <link
+        id="favicon"
+        rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E"
+    >
 
     <style>
         body {
@@ -174,11 +178,10 @@
             }
 
             try {
-                const [userRes, groupsRes, friendsRes, usernameHistoryRes] = await Promise.all([
+                const [userRes, groupsRes, friendsRes] = await Promise.all([
                     fetch(proxyUrl("users", `/v1/users/${userId}`)),
                     fetch(proxyUrl("groups", `/v1/users/${userId}/groups/roles`)),
-                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`)),
-                    fetch(proxyUrl("users", `/v1/users/${userId}/username-history`))
+                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`))
                 ]);
 
                 const user = await userRes.json();
@@ -193,12 +196,27 @@
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
-                const usernameHistory = await usernameHistoryRes.json();
+
+                let usernameHistory = null;
+                try {
+                    const usernameHistoryRes = await fetch(
+                        proxyUrl("users", `/v1/users/${userId}/username-history`)
+                    );
+                    if (usernameHistoryRes.ok) {
+                        usernameHistory = await usernameHistoryRes.json();
+                    } else {
+                        console.warn("Username history unavailable:", usernameHistoryRes.status);
+                    }
+                } catch (historyErr) {
+                    console.warn("Failed to fetch username history:", historyErr);
+                }
 
                 let usernamesHtml = "";
-                if (usernameHistory.data && usernameHistory.data.length > 0) {
+                if (usernameHistory?.data && usernameHistory.data.length > 0) {
                     usernamesHtml = `<div class="small"><strong>Previous Usernames:</strong></div>`;
                     usernamesHtml += usernameHistory.data.map(u => `<div class="small"><strong>${u.name}</strong></div>`).join("");
+                } else if (usernameHistory === null) {
+                    usernamesHtml = `<div class="small">Previous usernames are temporarily unavailable.</div>`;
                 }
 
                 const targetGroups = [
