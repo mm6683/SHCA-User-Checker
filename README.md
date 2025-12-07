@@ -1,31 +1,75 @@
 # SHCA User Checker
 
-A static, single-page tool for checking Stone-Haven County Asylum user details on Roblox. The page fetches public Roblox APIs to
- surface profile basics, group membership highlights, and quick links.
+The **SHCA User Checker** is a browser-based administrative tool designed to streamline background checks and user lookups for SHCA MR+, Moderation, and other authorized staff.  
+It aggregates information from **public Roblox APIs** and **public SHCA department databases**, presenting everything in a single fast and easy-to-read interface.
 
-## Running locally
+This project is **source-available** but **not open-source**.  
+Please read the license before using or sharing this code.
 
-Use the built-in Worker to avoid CORS errors when calling Roblox APIs:
+---
 
-```bash
-npm install
-npm run dev
-```
+## Features
 
-Wrangler will serve the static assets and forward `/proxy/...` requests to Roblox with permissive CORS headers.
+- **Username or UserID Lookup**  
+  Enter a Roblox username or UserID to fetch relevant public data instantly.
 
-## Deploying to Cloudflare Pages
+- **Roblox Profile Summary**  
+  Displays:
+  - Username  
+  - UserID  
+  - Avatar headshot  
+  - Previous usernames  
+  - Connections  
+  - Communities  
+  - Account creation date  
+  - Badges *(coming soon)*
 
-1. Create a new Cloudflare Pages project and connect it to this repository.
-2. Use **No build command** or leave it empty.
-3. Set the **Output directory** to `public` (where `index.html` lives).
-4. Save and deploy. Cloudflare Pages will host the static HTML for you.
+- **SHCA Staff Teams Integration**  
+  Automatically checks:
+  - Whether the user is a member of the **SHCA Staff Teams Community**
+  - All associated departments
+  - Ranks within each department
 
-## Deploying with Wrangler (if using the existing deploy command)
+- **Department Database Scanning** *(coming soon)*  
+  Once Sheets API access is finalized, the tool will scan all **public SHCA Department Databases** for matching UserIDs and display results.
 
-The included `wrangler.jsonc` points to the `public/` folder as the assets directory and enables a Worker proxy for Roblox requests. Running `npm run deploy` (or `npx wrangler deploy`) will deploy the static assets and the proxy Worker using that configuration.
+- **Streamlined Interface**  
+  Designed to replace the in-game profile command with a faster, more detailed, and more efficient alternative.
 
-## Notes
+---
 
-- The favicon is dynamically set from the SHCA group icon when the page loads.
-- Username lookups accept either a Roblox username (with or without leading `@`) or a numeric user ID.
+## Screenshot
+
+*(Placeholder)*
+
+---
+
+## Current Development Status
+
+- **Open Alpha**  
+The SHCA User Checker is currently live and hosted as a website.
+Functionality may change frequently, and some features are still experimental or flagged as “coming soon.”
+
+- **Beta Plans**  
+  The beta release will introduce:
+  - Badge lookup  
+  - Department database scanning  
+  - Additional profile metadata  
+
+---
+
+## Contributing
+
+Contributions, suggestions, and improvements are welcome **via Issues**.
+
+---
+
+## Contact
+
+For permissions, inquiries, or official collaboration, contact:
+
+**mm6683 / subsmicrofoongames**  
+Discord: *mm6683*  https://discord.com/users/(534430434709209120)
+Roblox: https://www.roblox.com/users/701515298/profile
+
+---
