@@ -1,6 +1,6 @@
 # SHCA User Checker
 
-**https://shca-user-checker.com/userid/119502667**
+**https://shca-user-checker.com/**
 
 The **SHCA User Checker** is a browser-based administrative tool designed to streamline background checks and user lookups for SHCA MR+, Moderation, and other authorized staff.  
 It aggregates information from **public Roblox APIs** and **public SHCA department databases**, presenting everything in a single fast and easy-to-read interface.
