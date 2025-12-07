@@ -30,8 +30,8 @@ Please read the license before using or sharing this code.
   - All associated departments
   - Ranks within each department
 
-- **Department Database Scanning** *(coming soon)*  
-  Once Sheets API access is finalized, the tool will scan all **public SHCA Department Databases** for matching UserIDs and display results.
+- **Department Database Searching** *(coming soon)*  
+  Once Sheets API access is finalized, the tool will search all **public SHCA Department Databases** for matching UserIDs and display results.
 
 - **Streamlined Interface**  
   Designed to replace the in-game profile command with a faster, more detailed, and more efficient alternative.
@@ -53,7 +53,7 @@ Functionality may change frequently, and some features are still experimental or
 - **Beta Plans**  
   The beta release will introduce:
   - Badge lookup  
-  - Department database scanning  
+  - Department database searching  
   - Additional profile metadata  
 
 ---
