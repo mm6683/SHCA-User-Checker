@@ -40,7 +40,7 @@ Please read the license before using or sharing this code.
 
 ## Screenshot
 
-*(Placeholder)*
+![showcase image](https://github.com/mm6683/SHCA-User-Checker/blob/main/public/images/image.png "showcase image")
 
 ---
 
