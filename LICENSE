@@ -1,21 +1,79 @@
-MIT License
+📄 SHCA User Checker — Source-Available License (SAL)
 
-Copyright (c) 2025 Midas M.
+Version 1.1 — 2025
+Copyright (c) 2025 Midas Maertens.
+All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software is source-available, not open-source.
+You may view and share the source code under the conditions below.
+All rights not explicitly granted are reserved by the copyright holder.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. Permissions
+
+You are allowed to:
+
+View, download, and study the source code.
+
+Share the source code in its original, unmodified form.
+
+Use the official hosted website of the SHCA User Checker.
+
+
+2. Restrictions (Without Explicit Written Permission)
+
+You are not allowed to:
+
+2.1 Hosting or Running
+
+Host or deploy this software on any website, server, application, or platform.
+
+Run the software in any way that replicates the functionality of the official hosted version.
+
+Operate a clone, fork, or derivative of the application.
+
+Only the copyright holder may host or operate the functional version.
+
+2.2 Modification and Derivative Works
+
+You may not:
+
+Modify, fork, adapt, or create derivative works of the software.
+
+Distribute modified versions publicly or privately.
+
+Integrate any part of the software into another application or tool.
+
+2.3 Commercial Use
+
+Commercial use of any kind is prohibited, including:
+
+Paid access
+
+Monetized hosting
+
+Selling the software
+
+Using it as part of a commercial product or service
+
+Permission must be requested for any commercial activity.
+
+
+3. Ownership
+
+The SHCA User Checker, its code, design, branding, and documentation are the intellectual property of Midas Maertens.
+
+No ownership rights are transferred under this license.
+
+
+4. Disclaimer
+
+This software is provided “as is,” without warranty of any kind.
+The copyright holder is not responsible for damages resulting from the viewing or sharing of the code.
+
+
+5. Contact
+
+For hosting rights, integration requests, or commercial permissions, contact:
+
+mm6683
