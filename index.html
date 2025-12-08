@@ -99,6 +99,9 @@
     </div>
 
     <script>
+        const ORDERLY_BLACKLIST_SHEET_BASE = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/";
+        const ORDERLY_BLACKLIST_API_KEY = "AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+
         async function setFavicon() {
             try {
                 const groupLogoRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=10275842&size=150x150&format=Png&isCircular=false`);
@@ -113,6 +116,49 @@
                 }
             } catch (err) {
                 console.error("Failed to fetch favicon logo:", err);
+            }
+        }
+
+        async function fetchOrderlyBlacklist(userId) {
+            try {
+                const columnRange = encodeURIComponent("Temporary Blacklists!B:B");
+                const columnRes = await fetch(`${ORDERLY_BLACKLIST_SHEET_BASE}${columnRange}?key=${ORDERLY_BLACKLIST_API_KEY}`);
+
+                if (!columnRes.ok) {
+                    console.warn("Failed to fetch orderly blacklist column:", columnRes.status);
+                    return null;
+                }
+
+                const columnData = await columnRes.json();
+                const values = columnData.values || [];
+                const rowIndex = values.findIndex(row => row[0] && row[0].trim() === String(userId));
+
+                if (rowIndex === -1) {
+                    return null;
+                }
+
+                const rowNumber = rowIndex + 1;
+                const rowRange = encodeURIComponent(`Temporary Blacklists!A${rowNumber}:F${rowNumber}`);
+                const rowRes = await fetch(`${ORDERLY_BLACKLIST_SHEET_BASE}${rowRange}?key=${ORDERLY_BLACKLIST_API_KEY}`);
+
+                if (!rowRes.ok) {
+                    console.warn("Failed to fetch orderly blacklist row:", rowRes.status);
+                    return null;
+                }
+
+                const rowData = await rowRes.json();
+                const rowValues = rowData.values?.[0];
+
+                if (!rowValues) {
+                    return null;
+                }
+
+                const [username, robloxId, discordId, duration, appealable, notes] = rowValues;
+
+                return { username, robloxId, discordId, duration, appealable, notes };
+            } catch (err) {
+                console.warn("Error while fetching orderly blacklist:", err);
+                return null;
             }
         }
 
@@ -215,6 +261,8 @@
                 const logosRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${groupIds.join(",")}&size=150x150&format=Png&isCircular=false`);
                 const logos = (await logosRes.json()).data.reduce((acc, cur) => (acc[cur.targetId] = cur.imageUrl, acc), {});
 
+                const orderlyBlacklist = await fetchOrderlyBlacklist(userId);
+
                 function timeAgo(date) {
                     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
                     const intervals = [
@@ -271,6 +319,25 @@
                     if (member) {
                         html += `<div class="group-entry"><img src="${logos[group.id]}"><div>User is ${group.name} | <strong>${member.role.name}</strong></div></div>`;
                     }
+                }
+
+                if (orderlyBlacklist) {
+                    html += `<div class="divider"></div>`;
+                    html += `
+                        <div class="group-entry"><img src="${logos[5819828]}"><div><strong>Orderly Temporary Blackist</strong></div></div>
+                        <div><strong>Username:</strong></div>
+                        <div>${orderlyBlacklist.username || "N/A"}</div>
+                        <div><strong>Roblox ID:</strong></div>
+                        <div>${orderlyBlacklist.robloxId || "N/A"}</div>
+                        <div><strong>Discord ID:</strong></div>
+                        <div>${orderlyBlacklist.discordId || "N/A"}</div>
+                        <div><strong>Duration:</strong></div>
+                        <div>${orderlyBlacklist.duration || "N/A"}</div>
+                        <div><strong>Appealable:</strong></div>
+                        <div>${orderlyBlacklist.appealable || "N/A"}</div>
+                        <div><strong>Notes:</strong></div>
+                        <div>${orderlyBlacklist.notes || "N/A"}</div>
+                    `;
                 }
 
                 result.innerHTML = html;
