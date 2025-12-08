@@ -230,6 +230,43 @@
             }
         }
 
+        async function fetchPsychiatryTemporaryBlacklistEntry(userId) {
+            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!C:C?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!B:K?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+
+            try {
+                const columnRes = await fetch(columnUrl);
+                if (!columnRes.ok) throw new Error("Failed to fetch psychiatry blacklist column");
+
+                const columnData = await columnRes.json();
+                const rows = columnData.values || [];
+                const rowIndex = rows.findIndex(row => row[0]?.toString() === userId.toString());
+
+                if (rowIndex === -1) {
+                    return null;
+                }
+
+                const detailsRes = await fetch(detailsUrl);
+                if (!detailsRes.ok) throw new Error("Failed to fetch psychiatry blacklist details");
+
+                const detailsData = await detailsRes.json();
+                const blacklistRow = detailsData.values?.[rowIndex] || [];
+
+                return {
+                    username: blacklistRow[0] || "",
+                    robloxId: blacklistRow[1] || "",
+                    discordId: blacklistRow[2] || "",
+                    dateLogged: blacklistRow[4] || "",
+                    blacklistLength: blacklistRow[6] || "",
+                    expiresOn: blacklistRow[7] || "",
+                    notes: blacklistRow[9] || ""
+                };
+            } catch (err) {
+                console.error("Failed to fetch psychiatry temporary blacklist:", err);
+                return null;
+            }
+        }
+
         async function fetchUserData() {
             let input = document.getElementById("userIdInput").value.trim();
             const result = document.getElementById("result");
@@ -302,9 +339,10 @@
                 const logosRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${groupIds.join(",")}&size=150x150&format=Png&isCircular=false`);
                 const logos = (await logosRes.json()).data.reduce((acc, cur) => (acc[cur.targetId] = cur.imageUrl, acc), {});
 
-                const [temporaryBlacklistEntry, permanentBlacklistEntry] = await Promise.all([
+                const [temporaryBlacklistEntry, permanentBlacklistEntry, psychiatryTemporaryBlacklistEntry] = await Promise.all([
                     fetchTemporaryBlacklistEntry(userId),
-                    fetchPermanentBlacklistEntry(userId)
+                    fetchPermanentBlacklistEntry(userId),
+                    fetchPsychiatryTemporaryBlacklistEntry(userId)
                 ]);
 
                 function timeAgo(date) {
@@ -436,6 +474,50 @@
                             <div class="blacklist-section">
                                 <div><strong>Notes:</strong></div>
                                 <div>${permanentBlacklistEntry.notes || "N/A"}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (psychiatryTemporaryBlacklistEntry) {
+                    html += `<div class="divider"></div>`;
+                    html += `
+                        <div class="group-entry">
+                            <img src="${logos[8959084] || ""}">
+                            <div><strong>Psychiatry temporary blacklist:</strong></div>
+                        </div>
+                        <div style="margin-left: 50px;">
+                            <div class="blacklist-section">
+                                <div><strong>Username:</strong></div>
+                                <div>${psychiatryTemporaryBlacklistEntry.username || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>Roblox ID:</strong></div>
+                                    <div>${psychiatryTemporaryBlacklistEntry.robloxId || "N/A"}</div>
+                                </div>
+                                <div class="blacklist-field">
+                                    <div><strong>Discord ID:</strong></div>
+                                    <div>${psychiatryTemporaryBlacklistEntry.discordId || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Date logged:</strong></div>
+                                <div>${psychiatryTemporaryBlacklistEntry.dateLogged || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>BL length:</strong></div>
+                                    <div>${psychiatryTemporaryBlacklistEntry.blacklistLength || "N/A"}</div>
+                                </div>
+                                <div class="blacklist-field">
+                                    <div><strong>Expires on:</strong></div>
+                                    <div>${psychiatryTemporaryBlacklistEntry.expiresOn || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Additional notes:</strong></div>
+                                <div>${psychiatryTemporaryBlacklistEntry.notes || "N/A"}</div>
                             </div>
                         </div>
                     `;
