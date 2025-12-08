@@ -53,7 +53,7 @@ Functionality may change frequently, and some features are still experimental or
 - **Beta Plans**  
   The beta release will introduce:
   - Badge lookup  
-  - Department database searching  
+  - Department database searching  (partly done)
   - Additional profile metadata  
 
 ---
