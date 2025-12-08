@@ -87,6 +87,10 @@
             font-size: 12px;
             color: #aaa;
         }
+
+        .blacklist-section {
+            margin-bottom: 14px;
+        }
     </style>
 
 </head>
@@ -244,7 +248,8 @@
                         `userIds=${userId}&size=150x150&format=Png&isCircular=true`
                     )
                 ).then(res => res.json());
-                const avatarUrl = thumbnail.data[0]?.imageUrl;
+                const avatarEntry = thumbnail.data?.[0];
+                const avatarUrl = (avatarEntry?.imageUrl || `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`).replace(/^http:\/\//, "https://");
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
@@ -363,18 +368,30 @@
                             <div><strong>Orderly Temporary Blackist</strong></div>
                         </div>
                         <div style="margin-left: 50px;">
-                            <div><strong>Username:</strong></div>
-                            <div>${blacklistEntry.username || "N/A"}</div>
-                            <div><strong>Roblox ID:</strong></div>
-                            <div>${blacklistEntry.robloxId || "N/A"}</div>
-                            <div><strong>Discord ID:</strong></div>
-                            <div>${blacklistEntry.discordId || "N/A"}</div>
-                            <div><strong>Duration:</strong></div>
-                            <div>${blacklistEntry.duration || "N/A"}</div>
-                            <div><strong>Appealable:</strong></div>
-                            <div>${blacklistEntry.appealable || "N/A"}</div>
-                            <div><strong>Notes:</strong></div>
-                            <div>${blacklistEntry.notes || "N/A"}</div>
+                            <div class="blacklist-section">
+                                <div><strong>Username:</strong></div>
+                                <div>${blacklistEntry.username || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Roblox ID:</strong></div>
+                                <div>${blacklistEntry.robloxId || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Discord ID:</strong></div>
+                                <div>${blacklistEntry.discordId || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Duration:</strong></div>
+                                <div>${blacklistEntry.duration || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Appealable:</strong></div>
+                                <div>${blacklistEntry.appealable || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Notes:</strong></div>
+                                <div>${blacklistEntry.notes || "N/A"}</div>
+                            </div>
                         </div>
                     `;
                 }
