@@ -87,6 +87,21 @@
             font-size: 12px;
             color: #aaa;
         }
+
+        .blacklist-section {
+            margin-bottom: 14px;
+        }
+
+        .blacklist-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .blacklist-field {
+            min-width: 180px;
+        }
     </style>
 
 </head>
@@ -163,6 +178,77 @@
             }
         }
 
+        async function fetchTemporaryBlacklistEntry(userId) {
+            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!B:B?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!A:F?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+
+            try {
+                const columnRes = await fetch(columnUrl);
+                if (!columnRes.ok) throw new Error("Failed to fetch blacklist column");
+
+                const columnData = await columnRes.json();
+                const rows = columnData.values || [];
+                const rowIndex = rows.findIndex(row => row[0]?.toString() === userId.toString());
+
+                if (rowIndex === -1) {
+                    return null;
+                }
+
+                const detailsRes = await fetch(detailsUrl);
+                if (!detailsRes.ok) throw new Error("Failed to fetch blacklist details");
+
+                const detailsData = await detailsRes.json();
+                const blacklistRow = detailsData.values?.[rowIndex] || [];
+
+                return {
+                    username: blacklistRow[0] || "",
+                    robloxId: blacklistRow[1] || "",
+                    discordId: blacklistRow[2] || "",
+                    duration: blacklistRow[3] || "",
+                    appealable: blacklistRow[4] || "",
+                    notes: blacklistRow[5] || ""
+                };
+            } catch (err) {
+                console.error("Failed to fetch temporary blacklist:", err);
+                return null;
+            }
+        }
+
+        async function fetchPermanentBlacklistEntry(userId) {
+            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!B:B?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!A:E?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+
+            try {
+                const columnRes = await fetch(columnUrl);
+                if (!columnRes.ok) throw new Error("Failed to fetch permanent blacklist column");
+
+                const columnData = await columnRes.json();
+                const rows = columnData.values || [];
+                const rowIndex = rows.findIndex(row => row[0]?.toString() === userId.toString());
+
+                if (rowIndex === -1) {
+                    return null;
+                }
+
+                const detailsRes = await fetch(detailsUrl);
+                if (!detailsRes.ok) throw new Error("Failed to fetch permanent blacklist details");
+
+                const detailsData = await detailsRes.json();
+                const blacklistRow = detailsData.values?.[rowIndex] || [];
+
+                return {
+                    username: blacklistRow[0] || "",
+                    robloxId: blacklistRow[1] || "",
+                    discordId: blacklistRow[2] || "",
+                    appealable: blacklistRow[3] || "",
+                    notes: blacklistRow[4] || ""
+                };
+            } catch (err) {
+                console.error("Failed to fetch permanent blacklist:", err);
+                return null;
+            }
+        }
+
         async function fetchUserData(initialInput = null) {
             const inputElement = document.getElementById("userIdInput");
 
@@ -208,7 +294,8 @@
                         `userIds=${userId}&size=150x150&format=Png&isCircular=true`
                     )
                 ).then(res => res.json());
-                const avatarUrl = thumbnail.data[0]?.imageUrl;
+                const avatarEntry = thumbnail.data?.[0];
+                const avatarUrl = (avatarEntry?.imageUrl || `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`).replace(/^http:\/\//, "https://");
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
@@ -257,6 +344,11 @@
                     )
                 );
                 const logos = (await logosRes.json()).data.reduce((acc, cur) => (acc[cur.targetId] = cur.imageUrl, acc), {});
+
+                const [temporaryBlacklistEntry, permanentBlacklistEntry] = await Promise.all([
+                    fetchTemporaryBlacklistEntry(userId),
+                    fetchPermanentBlacklistEntry(userId)
+                ]);
 
                 function timeAgo(date) {
                     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -315,6 +407,82 @@
                     if (member) {
                         html += `<div class="group-entry"><img src="${logos[group.id]}"><div>User is ${group.name} | <strong>${member.role.name}</strong></div></div>`;
                     }
+                }
+
+                if (temporaryBlacklistEntry) {
+                    html += `<div class="divider"></div>`;
+                    html += `
+                        <div class="group-entry">
+                            <img src="${logos[5819828] || ""}">
+                            <div><strong>Orderly Temporary Blackist</strong></div>
+                        </div>
+                        <div style="margin-left: 50px;">
+                            <div class="blacklist-section">
+                                <div><strong>Username:</strong></div>
+                                <div>${temporaryBlacklistEntry.username || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>Roblox ID:</strong></div>
+                                    <div>${temporaryBlacklistEntry.robloxId || "N/A"}</div>
+                                </div>
+                                <div class="blacklist-field">
+                                    <div><strong>Discord ID:</strong></div>
+                                    <div>${temporaryBlacklistEntry.discordId || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>Duration:</strong></div>
+                                    <div>${temporaryBlacklistEntry.duration || "N/A"}</div>
+                                </div>
+                                <div class="blacklist-field">
+                                    <div><strong>Appealable:</strong></div>
+                                    <div>${temporaryBlacklistEntry.appealable || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Notes:</strong></div>
+                                <div>${temporaryBlacklistEntry.notes || "N/A"}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (permanentBlacklistEntry) {
+                    html += `<div class="divider"></div>`;
+                    html += `
+                        <div class="group-entry">
+                            <img src="${logos[5819828] || ""}">
+                            <div><strong>Orderly Permanent Blackist</strong></div>
+                        </div>
+                        <div style="margin-left: 50px;">
+                            <div class="blacklist-section">
+                                <div><strong>Username:</strong></div>
+                                <div>${permanentBlacklistEntry.username || "N/A"}</div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>Roblox ID:</strong></div>
+                                    <div>${permanentBlacklistEntry.robloxId || "N/A"}</div>
+                                </div>
+                                <div class="blacklist-field">
+                                    <div><strong>Discord ID:</strong></div>
+                                    <div>${permanentBlacklistEntry.discordId || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-row">
+                                <div class="blacklist-field">
+                                    <div><strong>Appealable:</strong></div>
+                                    <div>${permanentBlacklistEntry.appealable || "N/A"}</div>
+                                </div>
+                            </div>
+                            <div class="blacklist-section">
+                                <div><strong>Notes:</strong></div>
+                                <div>${permanentBlacklistEntry.notes || "N/A"}</div>
+                            </div>
+                        </div>
+                    `;
                 }
 
                 result.innerHTML = html;
