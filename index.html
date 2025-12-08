@@ -116,6 +116,51 @@
             }
         }
 
+        const SHEET_BASE = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/";
+        const SHEET_KEY = "AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+        const TEMP_BLACKLIST_RANGE = encodeURIComponent("'Temporary Blacklists'!B:B");
+        const TEMP_BLACKLIST_FULL_RANGE = encodeURIComponent("'Temporary Blacklists'!A:F");
+
+        async function fetchTemporaryBlacklistEntry(userId) {
+            const normalizedId = String(userId).trim();
+
+            try {
+                const columnRes = await fetch(`${SHEET_BASE}${TEMP_BLACKLIST_RANGE}?key=${SHEET_KEY}`);
+
+                if (!columnRes.ok) {
+                    throw new Error(`Column lookup failed with status ${columnRes.status}`);
+                }
+
+                const columnData = await columnRes.json();
+                const entries = columnData.values || [];
+                const matchIndex = entries.findIndex(row => String(row[0]).trim() === normalizedId);
+
+                if (matchIndex === -1) {
+                    return null;
+                }
+
+                const fullRes = await fetch(`${SHEET_BASE}${TEMP_BLACKLIST_FULL_RANGE}?key=${SHEET_KEY}`);
+
+                if (!fullRes.ok) {
+                    throw new Error(`Full row lookup failed with status ${fullRes.status}`);
+                }
+
+                const fullData = await fullRes.json();
+                const row = fullData.values?.[matchIndex];
+
+                if (!row) {
+                    return null;
+                }
+
+                const [username, robloxId, discordId, duration, appealable, notes] = row;
+
+                return { username, robloxId, discordId, duration, appealable, notes };
+            } catch (err) {
+                console.error("Failed to fetch temporary blacklist data:", err);
+                return null;
+            }
+        }
+
         async function getUserIDFromUsername(name) {
             try {
                 const cleanedName = name.replace(/^@/, "").replace(/[()]/g, "").trim();
@@ -165,6 +210,7 @@
             }
 
             try {
+                const blacklistPromise = fetchTemporaryBlacklistEntry(userId);
                 const [userRes, groupsRes, friendsRes] = await Promise.all([
                     fetch(`https://users.roblox.com/v1/users/${userId}`),
                     fetch(`https://groups.roblox.com/v1/users/${userId}/groups/roles`),
@@ -271,6 +317,19 @@
                     if (member) {
                         html += `<div class="group-entry"><img src="${logos[group.id]}"><div>User is ${group.name} | <strong>${member.role.name}</strong></div></div>`;
                     }
+                }
+
+                const blacklistEntry = await blacklistPromise;
+
+                if (blacklistEntry) {
+                    html += `<div class="divider"></div>`;
+                    html += `<div class="group-entry"><img src="${logos[5819828] || ""}"><div><strong>Orderly Temporary Blackist</strong></div></div>`;
+                    html += `<div><strong>Username:</strong><br>${blacklistEntry.username || ""}</div>`;
+                    html += `<div><strong>Roblox ID:</strong><br>${blacklistEntry.robloxId || ""}</div>`;
+                    html += `<div><strong>Discord ID:</strong><br>${blacklistEntry.discordId || ""}</div>`;
+                    html += `<div><strong>Duration:</strong><br>${blacklistEntry.duration || ""}</div>`;
+                    html += `<div><strong>Appealable:</strong><br>${blacklistEntry.appealable || ""}</div>`;
+                    html += `<div><strong>Notes:</strong><br>${blacklistEntry.notes || ""}</div>`;
                 }
 
                 result.innerHTML = html;
