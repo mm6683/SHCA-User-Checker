@@ -7,11 +7,11 @@
     <meta property="og:title" content="SHCA User Checker">
     <meta property="og:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
     <meta property="og:type" content="website">
-    <meta property="og:image" id="og-image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E'>
+    <meta property="og:image" id="og-image" content="https://github.com/mm6683/SHCA-User-Checker/blob/main/public/logo.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="SHCA User Checker">
     <meta name="twitter:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
-    <meta name="twitter:image" id="twitter-image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E'>
+    <meta name="twitter:image" id="twitter-image" content="https://github.com/mm6683/SHCA-User-Checker/blob/main/public/logo.png">
     <link
         id="favicon"
         rel="icon"
@@ -124,6 +124,7 @@
 
     <script>
         const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
+        const HOME_META_IMAGE = "https://github.com/mm6683/SHCA-User-Checker/blob/main/public/logo.png";
 
         function buildProxiedCdnUrl(url) {
             try {
@@ -152,10 +153,10 @@
                     favicon.parentNode.replaceChild(newLink, favicon);
 
                     const ogImage = document.getElementById("og-image");
-                    if (ogImage) ogImage.setAttribute("content", logoUrl);
+                    if (ogImage) ogImage.setAttribute("content", HOME_META_IMAGE);
 
                     const twitterImage = document.getElementById("twitter-image");
-                    if (twitterImage) twitterImage.setAttribute("content", logoUrl);
+                    if (twitterImage) twitterImage.setAttribute("content", HOME_META_IMAGE);
                 }
             } catch (err) {
                 console.error("Failed to fetch favicon logo:", err);
