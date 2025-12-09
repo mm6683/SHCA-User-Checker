@@ -10,12 +10,17 @@ const TARGETS = {
   friends: "https://friends.roblox.com",
   thumbnails: "https://thumbnails.roblox.com",
   www: "https://www.roblox.com",
+  cdn: "https://tr.rbxcdn.com",
 };
 
 const DEFAULT_GROUP_ID = 10275842;
 const GROUP_ICON_SIZE = "420x420";
 const HEADSHOT_SIZE = "420x420";
 const FALLBACK_CARD_PATH = "/share-fallback.svg";
+const DEFAULT_FAVICON_DATA_URL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E";
+const HOME_META_IMAGE_URL = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
+const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
 
 async function handleProxy(request, env) {
   const url = new URL(request.url);
@@ -70,6 +75,20 @@ function getFallbackCardImage(request) {
   return new URL(FALLBACK_CARD_PATH, request.url).toString();
 }
 
+function proxyCdnUrl(rawUrl, request) {
+  try {
+    const parsed = new URL(rawUrl);
+
+    if (parsed.hostname !== ROBLOX_CDN_HOST) {
+      return rawUrl;
+    }
+
+    return new URL(`/proxy/cdn${parsed.pathname}${parsed.search}`, request.url).toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
 async function getGroupIconUrl(groupId, size = GROUP_ICON_SIZE) {
   try {
     const response = await fetch(
@@ -102,6 +121,32 @@ async function getUserHeadshotUrl(userId, size = HEADSHOT_SIZE) {
   }
 }
 
+async function getUserIdFromUsername(username) {
+  try {
+    const cleanUsername = username.replace(/^@/, "").replace(/[()]/g, "").trim();
+    if (!cleanUsername) return undefined;
+
+    const response = await fetch(`${TARGETS.users}/v1/usernames/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        usernames: [cleanUsername],
+        excludeBannedUsers: false,
+      }),
+    });
+
+    if (!response.ok) return undefined;
+
+    const payload = await response.json();
+    return payload?.data?.[0]?.id;
+  } catch (err) {
+    console.warn("Unable to fetch Roblox userId from username for share card", err);
+    return undefined;
+  }
+}
+
 async function serveUserSharePage(request, env, userId) {
   const baseResponse = await serveSPA(request, env);
   const contentType = baseResponse.headers.get("Content-Type") || "";
@@ -111,7 +156,9 @@ async function serveUserSharePage(request, env, userId) {
   }
 
   let description = `SHCA User Checker - User | ${userId}`;
-  let imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
+  const rawGroupIconUrl = await getGroupIconUrl(DEFAULT_GROUP_ID);
+  const rawImageUrl = rawGroupIconUrl || getFallbackCardImage(request);
+  let imageUrl = proxyCdnUrl(rawImageUrl, request);
 
   try {
     const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`);
@@ -129,7 +176,7 @@ async function serveUserSharePage(request, env, userId) {
 
   const headshotUrl = await getUserHeadshotUrl(userId);
   if (headshotUrl) {
-    imageUrl = headshotUrl;
+    imageUrl = proxyCdnUrl(headshotUrl, request);
   }
 
   const html = await baseResponse.text();
@@ -151,8 +198,20 @@ async function serveUserSharePage(request, env, userId) {
       replacement: `<meta property="og:image" content="${imageUrl || ""}"`,
     },
     {
+      pattern: /<meta\s+property="og:image:width"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:width" content="512"`,
+    },
+    {
+      pattern: /<meta\s+property="og:image:height"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:height" content="512"`,
+    },
+    {
       pattern: /<meta\s+name="twitter:image"[^>]*content="[^"]*"/i,
       replacement: `<meta name="twitter:image" content="${imageUrl || ""}"`,
+    },
+    {
+      pattern: /<meta\s+name="twitter:card"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="twitter:card" content="summary_large_image"`,
     },
   ];
 
@@ -176,7 +235,7 @@ async function serveMainSharePage(request, env) {
     return baseResponse;
   }
 
-  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
+  const imageUrl = HOME_META_IMAGE_URL;
 
   const html = await baseResponse.text();
   const replacements = [
@@ -185,8 +244,20 @@ async function serveMainSharePage(request, env) {
       replacement: `<meta property="og:image" content="${imageUrl}"`,
     },
     {
+      pattern: /<meta\s+property="og:image:width"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:width" content="150"`,
+    },
+    {
+      pattern: /<meta\s+property="og:image:height"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:height" content="150"`,
+    },
+    {
       pattern: /<meta\s+name="twitter:image"[^>]*content="[^"]*"/i,
       replacement: `<meta name="twitter:image" content="${imageUrl}"`,
+    },
+    {
+      pattern: /<meta\s+name="twitter:card"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="twitter:card" content="summary"`,
     },
   ];
 
@@ -202,6 +273,16 @@ async function serveMainSharePage(request, env) {
   });
 }
 
+async function serveUsernameSharePage(request, env, username) {
+  const userId = await getUserIdFromUsername(username);
+
+  if (!userId) {
+    return serveMainSharePage(request, env);
+  }
+
+  return serveUserSharePage(request, env, userId);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -211,6 +292,12 @@ export default {
     }
 
     if (url.pathname.startsWith("/username/")) {
+      const match = url.pathname.match(/^\/username\/([^/]+)/);
+
+      if (match) {
+        return serveUsernameSharePage(request, env, decodeURIComponent(match[1]));
+      }
+
       return serveMainSharePage(request, env);
     }
 

@@ -7,11 +7,13 @@
     <meta property="og:title" content="SHCA User Checker">
     <meta property="og:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
     <meta property="og:type" content="website">
-    <meta property="og:image" id="og-image" content="/share-fallback.svg">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" id="og-image" content="https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png">
+    <meta property="og:image:width" content="150">
+    <meta property="og:image:height" content="150">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="SHCA User Checker">
     <meta name="twitter:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
-    <meta name="twitter:image" id="twitter-image" content="/share-fallback.svg">
+    <meta name="twitter:image" id="twitter-image" content="https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png">
     <link
         id="favicon"
         rel="icon"
@@ -123,11 +125,28 @@
     </div>
 
     <script>
+        const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
+        const HOME_META_IMAGE = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
+
+        function buildProxiedCdnUrl(url) {
+            try {
+                const parsed = new URL(url);
+
+                if (parsed.hostname !== ROBLOX_CDN_HOST) {
+                    return url;
+                }
+
+                return `${window.location.origin}/proxy/cdn${parsed.pathname}${parsed.search}`;
+            } catch {
+                return url;
+            }
+        }
+
         async function setFavicon() {
             try {
-                const groupLogoRes = await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=10275842&size=150x150&format=Png&isCircular=false`);
+                const groupLogoRes = await fetch(`/proxy/thumbnails/v1/groups/icons?groupIds=10275842&size=150x150&format=Png&isCircular=false`);
                 const logoData = await groupLogoRes.json();
-                const logoUrl = logoData.data[0]?.imageUrl;
+                const logoUrl = buildProxiedCdnUrl(logoData.data[0]?.imageUrl);
 
                 if (logoUrl) {
                     const favicon = document.getElementById("favicon");
@@ -136,10 +155,10 @@
                     favicon.parentNode.replaceChild(newLink, favicon);
 
                     const ogImage = document.getElementById("og-image");
-                    if (ogImage) ogImage.setAttribute("content", logoUrl);
+                    if (ogImage) ogImage.setAttribute("content", HOME_META_IMAGE);
 
                     const twitterImage = document.getElementById("twitter-image");
-                    if (twitterImage) twitterImage.setAttribute("content", logoUrl);
+                    if (twitterImage) twitterImage.setAttribute("content", HOME_META_IMAGE);
                 }
             } catch (err) {
                 console.error("Failed to fetch favicon logo:", err);
@@ -638,43 +657,77 @@
             }
         });
 
-        async function setShareDescriptionForUserIdPath() {
-            const match = window.location.pathname.match(/^\/userid\/(\d+)(?:\/)?$/);
+        async function setShareMetadataForUserPath() {
+            const path = window.location.pathname;
+            const userIdMatch = path.match(/^\/userid\/(\d+)(?:\/)?$/);
+            const usernameMatch = path.match(/^\/username\/(.+)\/?$/);
 
-            if (!match) return;
+            let userId = userIdMatch?.[1];
 
-            const userId = match[1];
+            if (!userId && usernameMatch) {
+                const username = decodeURIComponent(usernameMatch[1]);
+                userId = await getUserIDFromUsername(username);
+            }
+
+            if (!userId) return;
+
+            const selectors = {
+                description: [
+                    'meta[name="description"]',
+                    'meta[property="og:description"]',
+                    'meta[name="twitter:description"]'
+                ],
+                image: [
+                    'meta[property="og:image"]',
+                    'meta[name="twitter:image"]'
+                ]
+            };
+
+            let description = `SHCA User Checker - User | ${userId}`;
 
             try {
                 const response = await fetch(`https://users.roblox.com/v1/users/${userId}`);
 
-                if (!response.ok) {
-                    console.warn("Unable to update share description; user lookup failed", response.status);
-                    return;
+                if (response.ok) {
+                    const user = await response.json();
+                    const username = user.name || user.displayName;
+                    if (username) {
+                        description = `SHCA User Checker - ${username} | ${userId}`;
+                    }
                 }
-
-                const user = await response.json();
-                const username = user.name || user.displayName || "User";
-                const description = `SHCA User Checker - ${username} | ${userId}`;
-
-                const selectors = [
-                    'meta[name="description"]',
-                    'meta[property="og:description"]',
-                    'meta[name="twitter:description"]'
-                ];
-
-                selectors.forEach(selector => {
-                    const tag = document.querySelector(selector);
-                    if (tag) tag.setAttribute("content", description);
-                });
             } catch (err) {
-                console.error("Failed to set share description for /userid path:", err);
+                console.error("Failed to fetch user details for metadata:", err);
+            }
+
+            selectors.description.forEach(selector => {
+                const tag = document.querySelector(selector);
+                if (tag) tag.setAttribute("content", description);
+            });
+
+            try {
+                const headshotRes = await fetch(
+                    `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=true`
+                );
+
+                if (headshotRes.ok) {
+                    const headshotData = await headshotRes.json();
+                    const headshotUrl = headshotData.data?.[0]?.imageUrl;
+
+                    if (headshotUrl) {
+                        selectors.image.forEach(selector => {
+                            const tag = document.querySelector(selector);
+                            if (tag) tag.setAttribute("content", headshotUrl);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch user headshot for metadata:", err);
             }
         }
 
         window.addEventListener("load", () => {
             setFavicon();
-            setShareDescriptionForUserIdPath();
+            setShareMetadataForUserPath();
         });
     </script>
 </body>
