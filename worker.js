@@ -198,8 +198,20 @@ async function serveUserSharePage(request, env, userId) {
       replacement: `<meta property="og:image" content="${imageUrl || ""}"`,
     },
     {
+      pattern: /<meta\s+property="og:image:width"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:width" content="512"`,
+    },
+    {
+      pattern: /<meta\s+property="og:image:height"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:height" content="512"`,
+    },
+    {
       pattern: /<meta\s+name="twitter:image"[^>]*content="[^"]*"/i,
       replacement: `<meta name="twitter:image" content="${imageUrl || ""}"`,
+    },
+    {
+      pattern: /<meta\s+name="twitter:card"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="twitter:card" content="summary_large_image"`,
     },
   ];
 
@@ -232,8 +244,20 @@ async function serveMainSharePage(request, env) {
       replacement: `<meta property="og:image" content="${imageUrl}"`,
     },
     {
+      pattern: /<meta\s+property="og:image:width"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:width" content="150"`,
+    },
+    {
+      pattern: /<meta\s+property="og:image:height"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:image:height" content="150"`,
+    },
+    {
       pattern: /<meta\s+name="twitter:image"[^>]*content="[^"]*"/i,
       replacement: `<meta name="twitter:image" content="${imageUrl}"`,
+    },
+    {
+      pattern: /<meta\s+name="twitter:card"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="twitter:card" content="summary"`,
     },
   ];
 
