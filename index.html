@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>SHCA User Checker</title>
+    <meta name="description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta property="og:title" content="SHCA User Checker">
+    <meta property="og:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" id="og-image" content="/share-fallback.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SHCA User Checker">
+    <meta name="twitter:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta name="twitter:image" id="twitter-image" content="/share-fallback.svg">
     <link
         id="favicon"
         rel="icon"
@@ -125,6 +134,12 @@
                     favicon.setAttribute("href", logoUrl);
                     const newLink = favicon.cloneNode(true);
                     favicon.parentNode.replaceChild(newLink, favicon);
+
+                    const ogImage = document.getElementById("og-image");
+                    if (ogImage) ogImage.setAttribute("content", logoUrl);
+
+                    const twitterImage = document.getElementById("twitter-image");
+                    if (twitterImage) twitterImage.setAttribute("content", logoUrl);
                 }
             } catch (err) {
                 console.error("Failed to fetch favicon logo:", err);
@@ -623,7 +638,44 @@
             }
         });
 
-        window.addEventListener("load", setFavicon);
+        async function setShareDescriptionForUserIdPath() {
+            const match = window.location.pathname.match(/^\/userid\/(\d+)(?:\/)?$/);
+
+            if (!match) return;
+
+            const userId = match[1];
+
+            try {
+                const response = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+
+                if (!response.ok) {
+                    console.warn("Unable to update share description; user lookup failed", response.status);
+                    return;
+                }
+
+                const user = await response.json();
+                const username = user.name || user.displayName || "User";
+                const description = `SHCA User Checker - ${username} | ${userId}`;
+
+                const selectors = [
+                    'meta[name="description"]',
+                    'meta[property="og:description"]',
+                    'meta[name="twitter:description"]'
+                ];
+
+                selectors.forEach(selector => {
+                    const tag = document.querySelector(selector);
+                    if (tag) tag.setAttribute("content", description);
+                });
+            } catch (err) {
+                console.error("Failed to set share description for /userid path:", err);
+            }
+        }
+
+        window.addEventListener("load", () => {
+            setFavicon();
+            setShareDescriptionForUserIdPath();
+        });
     </script>
 </body>
 </html>
