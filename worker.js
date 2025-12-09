@@ -13,7 +13,10 @@ const TARGETS = {
 };
 
 const DEFAULT_GROUP_ID = 10275842;
-const DEFAULT_PREVIEW_SIZE = "420x420";
+const GROUP_ICON_SIZE = "420x420";
+const HEADSHOT_SIZE = "150x150";
+const FALLBACK_CARD_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='12' fill='%231e1e1e'/%3E%3Ctext x='60' y='70' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3ESHCA%3C/text%3E%3C/svg%3E";
 
 async function handleProxy(request, env) {
   const url = new URL(request.url);
@@ -64,7 +67,7 @@ function serveSPA(request, env) {
   return env.ASSETS.fetch(spaRequest);
 }
 
-async function getGroupIconUrl(groupId, size = DEFAULT_PREVIEW_SIZE) {
+async function getGroupIconUrl(groupId, size = GROUP_ICON_SIZE) {
   try {
     const response = await fetch(
       `${TARGETS.thumbnails}/v1/groups/icons?groupIds=${groupId}&size=${size}&format=Png&isCircular=false`,
@@ -80,7 +83,7 @@ async function getGroupIconUrl(groupId, size = DEFAULT_PREVIEW_SIZE) {
   }
 }
 
-async function getUserHeadshotUrl(userId, size = DEFAULT_PREVIEW_SIZE) {
+async function getUserHeadshotUrl(userId, size = HEADSHOT_SIZE) {
   try {
     const response = await fetch(
       `${TARGETS.thumbnails}/v1/users/avatar-headshot?userIds=${userId}&size=${size}&format=Png&isCircular=true`,
@@ -105,7 +108,7 @@ async function serveUserSharePage(request, env, userId) {
   }
 
   let description = `SHCA User Checker - User | ${userId}`;
-  let imageUrl = await getGroupIconUrl(DEFAULT_GROUP_ID);
+  let imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || FALLBACK_CARD_IMAGE;
 
   try {
     const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`);
@@ -170,11 +173,7 @@ async function serveMainSharePage(request, env) {
     return baseResponse;
   }
 
-  const imageUrl = await getGroupIconUrl(DEFAULT_GROUP_ID);
-
-  if (!imageUrl) {
-    return baseResponse;
-  }
+  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || FALLBACK_CARD_IMAGE;
 
   const html = await baseResponse.text();
   const replacements = [
