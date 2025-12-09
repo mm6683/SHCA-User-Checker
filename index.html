@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>SHCA User Checker</title>
+    <meta name="description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta property="og:title" content="SHCA User Checker">
+    <meta property="og:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" id="og-image" content="">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SHCA User Checker">
+    <meta name="twitter:description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
+    <meta name="twitter:image" id="twitter-image" content="">
     <link
         id="favicon"
         rel="icon"
@@ -125,6 +134,12 @@
                     favicon.setAttribute("href", logoUrl);
                     const newLink = favicon.cloneNode(true);
                     favicon.parentNode.replaceChild(newLink, favicon);
+
+                    const ogImage = document.getElementById("og-image");
+                    if (ogImage) ogImage.setAttribute("content", logoUrl);
+
+                    const twitterImage = document.getElementById("twitter-image");
+                    if (twitterImage) twitterImage.setAttribute("content", logoUrl);
                 }
             } catch (err) {
                 console.error("Failed to fetch favicon logo:", err);
