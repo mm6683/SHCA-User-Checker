@@ -102,6 +102,32 @@ async function getUserHeadshotUrl(userId, size = HEADSHOT_SIZE) {
   }
 }
 
+async function getUserIdFromUsername(username) {
+  try {
+    const cleanUsername = username.replace(/^@/, "").replace(/[()]/g, "").trim();
+    if (!cleanUsername) return undefined;
+
+    const response = await fetch(`${TARGETS.users}/v1/usernames/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        usernames: [cleanUsername],
+        excludeBannedUsers: false,
+      }),
+    });
+
+    if (!response.ok) return undefined;
+
+    const payload = await response.json();
+    return payload?.data?.[0]?.id;
+  } catch (err) {
+    console.warn("Unable to fetch Roblox userId from username for share card", err);
+    return undefined;
+  }
+}
+
 async function serveUserSharePage(request, env, userId) {
   const baseResponse = await serveSPA(request, env);
   const contentType = baseResponse.headers.get("Content-Type") || "";
@@ -202,6 +228,16 @@ async function serveMainSharePage(request, env) {
   });
 }
 
+async function serveUsernameSharePage(request, env, username) {
+  const userId = await getUserIdFromUsername(username);
+
+  if (!userId) {
+    return serveMainSharePage(request, env);
+  }
+
+  return serveUserSharePage(request, env, userId);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -211,6 +247,12 @@ export default {
     }
 
     if (url.pathname.startsWith("/username/")) {
+      const match = url.pathname.match(/^\/username\/([^/]+)/);
+
+      if (match) {
+        return serveUsernameSharePage(request, env, decodeURIComponent(match[1]));
+      }
+
       return serveMainSharePage(request, env);
     }
 
