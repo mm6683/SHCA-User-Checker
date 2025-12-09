@@ -199,11 +199,11 @@ async function serveUserSharePage(request, env, userId) {
     },
     {
       pattern: /<meta\s+property="og:image:width"[^>]*content="[^"]*"/i,
-      replacement: `<meta property="og:image:width" content="512"`,
+      replacement: `<meta property="og:image:width" content="150"`,
     },
     {
       pattern: /<meta\s+property="og:image:height"[^>]*content="[^"]*"/i,
-      replacement: `<meta property="og:image:height" content="512"`,
+      replacement: `<meta property="og:image:height" content="150"`,
     },
     {
       pattern: /<meta\s+name="twitter:image"[^>]*content="[^"]*"/i,
@@ -211,7 +211,7 @@ async function serveUserSharePage(request, env, userId) {
     },
     {
       pattern: /<meta\s+name="twitter:card"[^>]*content="[^"]*"/i,
-      replacement: `<meta name="twitter:card" content="summary_large_image"`,
+      replacement: `<meta name="twitter:card" content="summary"`,
     },
   ];
 
