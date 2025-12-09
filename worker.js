@@ -10,6 +10,7 @@ const TARGETS = {
   friends: "https://friends.roblox.com",
   thumbnails: "https://thumbnails.roblox.com",
   www: "https://www.roblox.com",
+  cdn: "https://tr.rbxcdn.com",
 };
 
 const DEFAULT_GROUP_ID = 10275842;
@@ -18,6 +19,7 @@ const HEADSHOT_SIZE = "420x420";
 const FALLBACK_CARD_PATH = "/share-fallback.svg";
 const DEFAULT_FAVICON_DATA_URL =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E";
+const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
 
 async function handleProxy(request, env) {
   const url = new URL(request.url);
@@ -70,6 +72,20 @@ function serveSPA(request, env) {
 
 function getFallbackCardImage(request) {
   return new URL(FALLBACK_CARD_PATH, request.url).toString();
+}
+
+function proxyCdnUrl(rawUrl, request) {
+  try {
+    const parsed = new URL(rawUrl);
+
+    if (parsed.hostname !== ROBLOX_CDN_HOST) {
+      return rawUrl;
+    }
+
+    return new URL(`/proxy/cdn${parsed.pathname}${parsed.search}`, request.url).toString();
+  } catch {
+    return rawUrl;
+  }
 }
 
 async function getGroupIconUrl(groupId, size = GROUP_ICON_SIZE) {
@@ -139,7 +155,9 @@ async function serveUserSharePage(request, env, userId) {
   }
 
   let description = `SHCA User Checker - User | ${userId}`;
-  let imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
+  const rawGroupIconUrl = await getGroupIconUrl(DEFAULT_GROUP_ID);
+  const rawImageUrl = rawGroupIconUrl || getFallbackCardImage(request);
+  let imageUrl = proxyCdnUrl(rawImageUrl, request);
 
   try {
     const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`);
@@ -157,7 +175,7 @@ async function serveUserSharePage(request, env, userId) {
 
   const headshotUrl = await getUserHeadshotUrl(userId);
   if (headshotUrl) {
-    imageUrl = headshotUrl;
+    imageUrl = proxyCdnUrl(headshotUrl, request);
   }
 
   const html = await baseResponse.text();
@@ -204,7 +222,9 @@ async function serveMainSharePage(request, env) {
     return baseResponse;
   }
 
-  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || DEFAULT_FAVICON_DATA_URL || getFallbackCardImage(request);
+  const rawGroupIconUrl = await getGroupIconUrl(DEFAULT_GROUP_ID);
+  const rawImageUrl = rawGroupIconUrl || DEFAULT_FAVICON_DATA_URL || getFallbackCardImage(request);
+  const imageUrl = proxyCdnUrl(rawImageUrl, request);
 
   const html = await baseResponse.text();
   const replacements = [

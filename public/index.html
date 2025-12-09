@@ -130,6 +130,22 @@
             return `${API_BASE}/${service}${path}${query}`;
         }
 
+        const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
+
+        function buildProxiedCdnUrl(url) {
+            try {
+                const parsed = new URL(url);
+
+                if (parsed.hostname !== ROBLOX_CDN_HOST) {
+                    return url;
+                }
+
+                return `${window.location.origin}/proxy/cdn${parsed.pathname}${parsed.search}`;
+            } catch {
+                return url;
+            }
+        }
+
         async function setFavicon() {
             try {
                 const groupLogoRes = await fetch(
@@ -140,7 +156,7 @@
                     )
                 );
                 const logoData = await groupLogoRes.json();
-                const logoUrl = logoData.data[0]?.imageUrl;
+                const logoUrl = buildProxiedCdnUrl(logoData.data[0]?.imageUrl);
 
                 if (logoUrl) {
                     const favicon = document.getElementById("favicon");
