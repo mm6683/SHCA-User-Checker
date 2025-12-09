@@ -61,6 +61,58 @@ function serveSPA(request, env) {
   return env.ASSETS.fetch(spaRequest);
 }
 
+async function serveUserSharePage(request, env, userId) {
+  const baseResponse = await serveSPA(request, env);
+  const contentType = baseResponse.headers.get("Content-Type") || "";
+
+  if (!contentType.includes("text/html")) {
+    return baseResponse;
+  }
+
+  let description = `SHCA User Checker - User | ${userId}`;
+
+  try {
+    const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+
+    if (userResponse.ok) {
+      const user = await userResponse.json();
+      const username = user.name || user.displayName;
+      if (username) {
+        description = `SHCA User Checker - ${username} | ${userId}`;
+      }
+    }
+  } catch (err) {
+    console.warn("Unable to fetch Roblox user for share card", err);
+  }
+
+  const html = await baseResponse.text();
+  const replacements = [
+    {
+      pattern: /<meta\s+name="description"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="description" content="${description}"`,
+    },
+    {
+      pattern: /<meta\s+property="og:description"[^>]*content="[^"]*"/i,
+      replacement: `<meta property="og:description" content="${description}"`,
+    },
+    {
+      pattern: /<meta\s+name="twitter:description"[^>]*content="[^"]*"/i,
+      replacement: `<meta name="twitter:description" content="${description}"`,
+    },
+  ];
+
+  const updatedHtml = replacements.reduce((output, { pattern, replacement }) => {
+    return output.replace(pattern, replacement);
+  }, html);
+
+  const headers = new Headers(baseResponse.headers);
+  return new Response(updatedHtml, {
+    status: baseResponse.status,
+    statusText: baseResponse.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -69,7 +121,17 @@ export default {
       return handleProxy(request, env);
     }
 
-    if (url.pathname.startsWith("/username/") || url.pathname.startsWith("/userid/")) {
+    if (url.pathname.startsWith("/username/")) {
+      return serveSPA(request, env);
+    }
+
+    if (url.pathname.startsWith("/userid/")) {
+      const match = url.pathname.match(/^\/userid\/(\d+)/);
+
+      if (match) {
+        return serveUserSharePage(request, env, match[1]);
+      }
+
       return serveSPA(request, env);
     }
 
