@@ -16,6 +16,8 @@ const DEFAULT_GROUP_ID = 10275842;
 const GROUP_ICON_SIZE = "420x420";
 const HEADSHOT_SIZE = "420x420";
 const FALLBACK_CARD_PATH = "/share-fallback.svg";
+const DEFAULT_FAVICON_DATA_URL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E";
 
 async function handleProxy(request, env) {
   const url = new URL(request.url);
@@ -202,7 +204,7 @@ async function serveMainSharePage(request, env) {
     return baseResponse;
   }
 
-  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
+  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || DEFAULT_FAVICON_DATA_URL || getFallbackCardImage(request);
 
   const html = await baseResponse.text();
   const replacements = [
