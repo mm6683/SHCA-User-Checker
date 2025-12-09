@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Stone-Haven County Asylum logo placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1e1e1e" />
+      <stop offset="100%" stop-color="#2c2c2c" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#bg)" />
+  <circle cx="60" cy="120" r="32" fill="#444" />
+  <circle cx="140" cy="90" r="38" fill="#666" />
+  <rect x="44" y="74" width="112" height="52" rx="12" fill="#222" stroke="#888" stroke-width="6" />
+  <path d="M78 78h16v44H78zM106 78h16v44h-16z" fill="#7bd1ff" />
+  <text x="100" y="164" text-anchor="middle" font-size="26" font-family="Arial, sans-serif" fill="#f5f5f5">SHCA</text>
+</svg>

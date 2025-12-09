@@ -14,9 +14,8 @@ const TARGETS = {
 
 const DEFAULT_GROUP_ID = 10275842;
 const GROUP_ICON_SIZE = "420x420";
-const HEADSHOT_SIZE = "150x150";
-const FALLBACK_CARD_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='12' fill='%231e1e1e'/%3E%3Ctext x='60' y='70' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3ESHCA%3C/text%3E%3C/svg%3E";
+const HEADSHOT_SIZE = "420x420";
+const FALLBACK_CARD_PATH = "/share-fallback.svg";
 
 async function handleProxy(request, env) {
   const url = new URL(request.url);
@@ -67,6 +66,10 @@ function serveSPA(request, env) {
   return env.ASSETS.fetch(spaRequest);
 }
 
+function getFallbackCardImage(request) {
+  return new URL(FALLBACK_CARD_PATH, request.url).toString();
+}
+
 async function getGroupIconUrl(groupId, size = GROUP_ICON_SIZE) {
   try {
     const response = await fetch(
@@ -108,7 +111,7 @@ async function serveUserSharePage(request, env, userId) {
   }
 
   let description = `SHCA User Checker - User | ${userId}`;
-  let imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || FALLBACK_CARD_IMAGE;
+  let imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
 
   try {
     const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`);
@@ -173,7 +176,7 @@ async function serveMainSharePage(request, env) {
     return baseResponse;
   }
 
-  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || FALLBACK_CARD_IMAGE;
+  const imageUrl = (await getGroupIconUrl(DEFAULT_GROUP_ID)) || getFallbackCardImage(request);
 
   const html = await baseResponse.text();
   const replacements = [
