@@ -71,6 +71,38 @@ function serveSPA(request, env) {
   return env.ASSETS.fetch(spaRequest);
 }
 
+async function handleSheets(request, env) {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  if (request.method !== "GET") {
+    return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
+  }
+
+  const apiKey = env["SHEETS_API_KEY-SHCA_USER_CHECKER"];
+
+  if (!apiKey) {
+    return new Response("Sheets API key not configured", { status: 500, headers: CORS_HEADERS });
+  }
+
+  const url = new URL(request.url);
+  const targetPath = url.pathname.replace(/^\/sheets/, "");
+  const targetUrl = new URL(targetPath + url.search, "https://sheets.googleapis.com");
+
+  targetUrl.searchParams.set("key", apiKey);
+
+  const response = await fetch(targetUrl.toString());
+  const headers = new Headers(response.headers);
+  Object.entries(CORS_HEADERS).forEach(([key, value]) => headers.set(key, value));
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function getFallbackCardImage(request) {
   return new URL(FALLBACK_CARD_PATH, request.url).toString();
 }
@@ -286,6 +318,10 @@ async function serveUsernameSharePage(request, env, username) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/sheets/")) {
+      return handleSheets(request, env);
+    }
 
     if (url.pathname.startsWith("/proxy/")) {
       return handleProxy(request, env);

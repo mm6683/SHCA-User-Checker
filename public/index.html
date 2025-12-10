@@ -213,8 +213,8 @@
         }
 
         async function fetchTemporaryBlacklistEntry(userId) {
-            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!B:B?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
-            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!A:F?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const columnUrl = "/sheets/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!B:B";
+            const detailsUrl = "/sheets/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Temporary%20Blacklists'!A:F";
 
             try {
                 const columnRes = await fetch(columnUrl);
@@ -249,8 +249,8 @@
         }
 
         async function fetchPermanentBlacklistEntry(userId) {
-            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!B:B?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
-            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!A:E?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const columnUrl = "/sheets/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!B:B";
+            const detailsUrl = "/sheets/v4/spreadsheets/1nqYVijw4shUKdLS_xntMbELH4IJ_p_M61MFqE503GSA/values/'Permanent%20Blacklists'!A:E";
 
             try {
                 const columnRes = await fetch(columnUrl);
@@ -284,8 +284,8 @@
         }
 
         async function fetchPsychiatryTemporaryBlacklistEntry(userId) {
-            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!C:C?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
-            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!B:K?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const columnUrl = "/sheets/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!C:C";
+            const detailsUrl = "/sheets/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Temporary%20Blacklists'!B:K";
 
             try {
                 const columnRes = await fetch(columnUrl);
@@ -321,8 +321,8 @@
         }
 
         async function fetchPsychiatryPermanentBlacklistEntry(userId) {
-            const columnUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Permanent%20Blacklists'!C:C?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
-            const detailsUrl = "https://sheets.googleapis.com/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Permanent%20Blacklists'!B:K?key=AIzaSyCAikFNJygYWQTLyrskY4-KKcbuQJ_o_Hk";
+            const columnUrl = "/sheets/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Permanent%20Blacklists'!C:C";
+            const detailsUrl = "/sheets/v4/spreadsheets/1qzrNIy22MUTvHt34Q4o6PvHmR9dR3TYOdWzmR-Q5baM/values/'Permanent%20Blacklists'!B:K";
 
             try {
                 const columnRes = await fetch(columnUrl);
