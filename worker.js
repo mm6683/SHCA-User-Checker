@@ -80,7 +80,8 @@ async function handleSheets(request, env) {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
-  const apiKey = env["SHEETS_API_KEY-SHCA_USER_CHECKER"];
+  const apiKey =
+    env["SHEETS_API_KEY-SHCA_USER_CHECKER"] || env.SHEETS_API_KEY_SHCA_USER_CHECKER;
 
   if (!apiKey) {
     return new Response("Sheets API key not configured", { status: 500, headers: CORS_HEADERS });
