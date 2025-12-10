@@ -85,8 +85,12 @@ async function resolveSheetsApiKey(env) {
     const secret = env[binding];
 
     if (secret && typeof secret.get === "function") {
-      const value = await secret.get();
-      if (value) return value;
+      try {
+        const value = await secret.get();
+        if (value) return value;
+      } catch (err) {
+        console.warn(`Unable to read secret binding ${binding}`, err);
+      }
     }
   }
 
