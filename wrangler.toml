@@ -2,19 +2,19 @@ name = "shca-user-checker"
 main = "worker.js"
 compatibility_date = "2025-12-06"
 
-# Default deployment uses classic secrets to avoid failing when the Secrets Store
-# binding is not available in the target account.
+# Default deployment uses classic Workers secrets so builds do not fail when a
+# Secrets Store is not available (see https://developers.cloudflare.com/secrets-store/integrations/workers/).
 secrets = ["SHEETS_API_KEY"]
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
 
+# Production expects the Sheets key to come from the Cloudflare Secrets Store.
+# Set CF_SECRETS_STORE_ID to the ID of the store that contains
+# `SHEETS_API_KEY-SHCA_USER_CHECKER` before deploying with `--env production`.
 [env.production]
-# Configure the Secrets Store binding for environments that have the store
-# provisioned. Replace <store-id> with the actual Secrets Store ID in the
-# account that contains the secret name below.
 [[env.production.secrets_store_secrets]]
 binding = "SHEETS_API_KEY"
-store_id = "<store-id>"
+store_id = "${CF_SECRETS_STORE_ID}"
 secret_name = "SHEETS_API_KEY-SHCA_USER_CHECKER"

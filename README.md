@@ -61,8 +61,11 @@ Functionality may change frequently, and some features are still experimental or
 ## Deployment notes
 
 - Default deployments expect a classic Workers secret named `SHEETS_API_KEY` (set with `wrangler secret put SHEETS_API_KEY`).
-- For environments that use Cloudflare Secrets Store, ensure the store contains `SHEETS_API_KEY-SHCA_USER_CHECKER` and set the `store_id` in `[env.production]` of `wrangler.toml` before deploying.
-- Use credentials that have Secrets Store read permissions when deploying with the production environment.
+- To use Cloudflare Secrets Store (per <https://developers.cloudflare.com/secrets-store/integrations/workers/>):
+  1. Create or identify the Secrets Store in the correct account and add the secret `SHEETS_API_KEY-SHCA_USER_CHECKER`.
+  2. Capture the **store ID** from the Secrets Store page and set `CF_SECRETS_STORE_ID` to that value in your deploy environment.
+  3. Deploy with `--env production` so `wrangler.toml` binds the store secret (`binding = "SHEETS_API_KEY"`, `secret_name = "SHEETS_API_KEY-SHCA_USER_CHECKER"`).
+  4. Ensure the deploy token has Secrets Store read permission.
 
 ---
 
