@@ -8,4 +8,5 @@ binding = "ASSETS"
 
 [[secrets_store_secrets]]
 binding = "SHEETS_API_KEY"
-name = "SHEETS_API_KEY-SHCA_USER_CHECKER"
+store_id = "SHEETS_API_KEY-SHCA_USER_CHECKER"
+secret_name = "SHEETS_API_KEY-SHCA_USER_CHECKER"
