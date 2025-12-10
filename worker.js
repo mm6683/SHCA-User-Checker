@@ -71,15 +71,33 @@ function serveSPA(request, env) {
   return env.ASSETS.fetch(spaRequest);
 }
 
-function resolveSheetsApiKey(env) {
-  return (
-    env["SHEETS_API_KEY-SHCA_USER_CHECKER"] ||
-    env.SHEETS_API_KEY_SHCA_USER_CHECKER ||
-    env.SHEETS_API_KEY ||
-    env.GOOGLE_SHEETS_API_KEY ||
-    env.SHEETS_API_KEY_SHCA ||
-    env.SHEETS_KEY
-  );
+async function resolveSheetsApiKey(env) {
+  const bindingCandidates = [
+    "SHEETS_API_KEY",
+    "SHEETS_API_KEY_SHCA_USER_CHECKER",
+    "GOOGLE_SHEETS_API_KEY",
+    "SHEETS_API_KEY_SHCA",
+    "SHEETS_KEY",
+    "SHEETS_API_KEY-SHCA_USER_CHECKER",
+  ];
+
+  for (const binding of bindingCandidates) {
+    const secret = env[binding];
+
+    if (secret && typeof secret.get === "function") {
+      const value = await secret.get();
+      if (value) return value;
+    }
+  }
+
+  for (const binding of bindingCandidates) {
+    const value = env[binding];
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return undefined;
 }
 
 async function handleSheets(request, env) {
@@ -91,7 +109,7 @@ async function handleSheets(request, env) {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
-  const apiKey = resolveSheetsApiKey(env);
+  const apiKey = await resolveSheetsApiKey(env);
 
   if (!apiKey) {
     return new Response("Sheets API key not configured", { status: 500, headers: CORS_HEADERS });

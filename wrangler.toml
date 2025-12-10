@@ -1,0 +1,11 @@
+name = "shca-user-checker"
+main = "worker.js"
+compatibility_date = "2025-12-06"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[secrets_store_secrets]]
+binding = "SHEETS_API_KEY"
+name = "SHEETS_API_KEY-SHCA_USER_CHECKER"
