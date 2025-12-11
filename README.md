@@ -35,7 +35,9 @@ Please read the license before using or sharing this code.
 - **Department Database Searching** *(almost done)*  
   Once Sheets API access is finalized, the tool will search all **public SHCA Department Databases** for matching UserIDs and display results.
   Currently, the blacklists of the current departments are available:
+  
   Orderly temporary & permanent
+  
   Psychiatry temporary & permanent
 
 - **Streamlined Interface**  
