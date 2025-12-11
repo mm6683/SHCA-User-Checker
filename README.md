@@ -32,8 +32,11 @@ Please read the license before using or sharing this code.
   - All associated departments
   - Ranks within each department
 
-- **Department Database Searching** *(coming soon)*  
+- **Department Database Searching** *(almost done)*  
   Once Sheets API access is finalized, the tool will search all **public SHCA Department Databases** for matching UserIDs and display results.
+  Currently, the blacklists of the current departments are available:
+  Orderly temporary & permanent
+  Psychiatry temporary & permanent
 
 - **Streamlined Interface**  
   Designed to replace the in-game profile command with a faster, more detailed, and more efficient alternative.
