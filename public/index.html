@@ -179,31 +179,56 @@
         }
 
         async function getUserIDFromUsername(name) {
-            try {
-                const cleanedName = name.replace(/^@/, "").replace(/[()]/g, "").trim();
-                const res = await fetch(proxyUrl("users", "/v1/usernames/users"), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        usernames: [cleanedName],
-                        excludeBannedUsers: false
-                    })
-                });
+            const cleanedName = name.replace(/^@/, "").replace(/[()]/g, "").trim();
+            const payload = {
+                usernames: [cleanedName],
+                excludeBannedUsers: false
+            };
 
-                if (!res.ok) throw new Error("Invalid response");
+            const endpoints = [
+                proxyUrl("users", "/v1/usernames/users"),
+                "https://users.roblox.com/v1/usernames/users"
+            ];
 
-                const data = await res.json();
-                const user = data.data?.[0];
+            let rateLimited = false;
 
-                if (!user?.id) throw new Error("User ID not found in lookup response");
+            for (const endpoint of endpoints) {
+                try {
+                    const res = await fetch(endpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
 
-                return user.id;
-            } catch (err) {
-                console.error("Failed to get user ID:", err);
-                return null;
+                    if (res.status === 429) {
+                        rateLimited = true;
+                        console.warn("Roblox username lookup is rate limited (429)");
+                        continue;
+                    }
+
+                    if (!res.ok) {
+                        console.warn(`Username lookup failed at ${endpoint} with status ${res.status}`);
+                        continue;
+                    }
+
+                    const data = await res.json();
+                    const user = data.data?.[0];
+
+                    if (user?.id) return user.id;
+
+                    console.warn("User ID not found in lookup response");
+                } catch (err) {
+                    console.error(`Failed to get user ID from ${endpoint}:`, err);
+                }
             }
+
+            if (rateLimited) {
+                throw new Error("USERNAME_LOOKUP_RATE_LIMITED");
+            }
+
+            return null;
         }
 
         function clearUsernamePath() {
@@ -411,7 +436,18 @@
 
             input = input.replace(/^@/, "").replace(/[()]/g, "").trim();
 
-            const userId = /^\d+$/.test(input) ? input : await getUserIDFromUsername(input);
+            let userId = null;
+
+            try {
+                userId = /^\d+$/.test(input) ? input : await getUserIDFromUsername(input);
+            } catch (err) {
+                if (err?.message === "USERNAME_LOOKUP_RATE_LIMITED") {
+                    result.innerHTML = "❌ Roblox username lookup is currently rate limited. Please try again in a moment.";
+                    return;
+                }
+
+                throw err;
+            }
 
             if (!userId) {
                 result.innerHTML = "❌ Failed to find user by username.";
@@ -810,7 +846,12 @@
 
             if (!userId && usernameMatch) {
                 const username = decodeURIComponent(usernameMatch[1]);
-                userId = await getUserIDFromUsername(username);
+
+                try {
+                    userId = await getUserIDFromUsername(username);
+                } catch (err) {
+                    console.warn("Username lookup for share metadata failed:", err);
+                }
             }
 
             if (!userId) return;
