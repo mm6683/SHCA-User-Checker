@@ -357,6 +357,41 @@
             }
         }
 
+        async function fetchTrelloBlacklistMatches(userId) {
+            const boardId = "jj08jer1";
+            const apiKey = "376bfd5c745d7c6b3489fb2f872d960d";
+
+            try {
+                const [cardsRes, listsRes] = await Promise.all([
+                    fetch(
+                        `https://api.trello.com/1/boards/${boardId}/cards?fields=name,desc,idList,labels&attachments=true&attachment_fields=url,name,mimeType&key=${apiKey}`
+                    ),
+                    fetch(`https://api.trello.com/1/boards/${boardId}/lists?fields=name&key=${apiKey}`)
+                ]);
+
+                if (!cardsRes.ok || !listsRes.ok) throw new Error("Failed to fetch Trello data");
+
+                const [cards, lists] = await Promise.all([cardsRes.json(), listsRes.json()]);
+                const listNames = lists.reduce((acc, list) => {
+                    acc[list.id] = list.name || "Unknown List";
+                    return acc;
+                }, {});
+
+                return cards
+                    .filter(card => card.name?.includes(userId.toString()))
+                    .map(card => ({
+                        listName: listNames[card.idList] || "Unknown List",
+                        name: card.name || "",
+                        description: card.desc || "",
+                        labels: (card.labels || []).map(label => label.name || label.color || "").filter(Boolean),
+                        attachments: card.attachments || []
+                    }));
+            } catch (err) {
+                console.error("Failed to fetch Trello blacklist entries:", err);
+                return [];
+            }
+        }
+
         async function fetchUserData(initialInput = null) {
             const inputElement = document.getElementById("userIdInput");
 
@@ -457,12 +492,14 @@
                     temporaryBlacklistEntry,
                     permanentBlacklistEntry,
                     psychiatryTemporaryBlacklistEntry,
-                    psychiatryPermanentBlacklistEntry
+                    psychiatryPermanentBlacklistEntry,
+                    trelloBlacklistEntries
                 ] = await Promise.all([
                     fetchTemporaryBlacklistEntry(userId),
                     fetchPermanentBlacklistEntry(userId),
                     fetchPsychiatryTemporaryBlacklistEntry(userId),
-                    fetchPsychiatryPermanentBlacklistEntry(userId)
+                    fetchPsychiatryPermanentBlacklistEntry(userId),
+                    fetchTrelloBlacklistMatches(userId)
                 ]);
 
                 function timeAgo(date) {
@@ -686,6 +723,58 @@
                             </div>
                         </div>
                     `;
+                }
+
+                if (trelloBlacklistEntries && trelloBlacklistEntries.length > 0) {
+                    trelloBlacklistEntries.forEach(entry => {
+                        const attachmentsHtml = entry.attachments.length
+                            ? entry.attachments
+                                .map(att => {
+                                    if (!att.url) return "";
+
+                                    const attachmentName = att.name || att.url;
+                                    const attachmentLink = `<div><a href="${att.url}" target="_blank" rel="noopener noreferrer">${attachmentName}</a></div>`;
+                                    const isVideo = (att.mimeType && att.mimeType.startsWith("video/")) || /\.(mp4|webm|mov|mkv)(\?|$)/i.test(att.url);
+
+                                    if (isVideo) {
+                                        return `${attachmentLink}<video src="${att.url}" controls style="max-width: 100%; margin-top: 6px;"></video>`;
+                                    }
+
+                                    return attachmentLink;
+                                })
+                                .join("") || "No attachments"
+                            : "No attachments";
+
+                        const labelsText = entry.labels.length ? entry.labels.join(", ") : "No labels";
+
+                        html += `<div class="divider"></div>`;
+                        html += `
+                            <div class="group-entry">
+                                <img src="${logos[14952106] || ""}">
+                                <div><strong>CR ${entry.listName}</strong></div>
+                            </div>
+                            <div style="margin-left: 50px;">
+                                <div class="blacklist-row">
+                                    <div class="blacklist-field">
+                                        <div><strong>Title</strong></div>
+                                        <div>${entry.name || "N/A"}</div>
+                                    </div>
+                                    <div class="blacklist-field">
+                                        <div><strong>Labels</strong></div>
+                                        <div>${labelsText}</div>
+                                    </div>
+                                </div>
+                                <div class="blacklist-section">
+                                    <div><strong>Description</strong></div>
+                                    <div>${entry.description || "No description"}</div>
+                                </div>
+                                <div class="blacklist-section">
+                                    <div><strong>Attachments</strong></div>
+                                    <div>${attachmentsHtml}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
                 }
 
                 result.innerHTML = html;
