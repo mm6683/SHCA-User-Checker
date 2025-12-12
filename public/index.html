@@ -360,13 +360,19 @@
         async function fetchTrelloBlacklistMatches(userId) {
             const boardId = "jj08jer1";
             const apiKey = "376bfd5c745d7c6b3489fb2f872d960d";
+            const apiToken = window.TRELLO_TOKEN || new URLSearchParams(window.location.search).get("trelloToken") || "";
+
+            if (!apiToken) {
+                console.warn("Skipping Trello blacklist fetch: missing API token.");
+                return [];
+            }
 
             try {
                 const [cardsRes, listsRes] = await Promise.all([
                     fetch(
-                        `https://api.trello.com/1/boards/${boardId}/cards?fields=name,desc,idList,labels&attachments=true&attachment_fields=url,name,mimeType&key=${apiKey}`
+                        `https://api.trello.com/1/boards/${boardId}/cards?fields=name,desc,idList,labels&attachments=true&attachment_fields=url,name,mimeType&key=${apiKey}&token=${apiToken}`
                     ),
-                    fetch(`https://api.trello.com/1/boards/${boardId}/lists?fields=name&key=${apiKey}`)
+                    fetch(`https://api.trello.com/1/boards/${boardId}/lists?fields=name&key=${apiKey}&token=${apiToken}`)
                 ]);
 
                 if (!cardsRes.ok || !listsRes.ok) throw new Error("Failed to fetch Trello data");
