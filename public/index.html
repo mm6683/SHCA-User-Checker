@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SHCA User Checker</title>
     <meta name="description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
     <meta property="og:title" content="SHCA User Checker">
@@ -137,6 +138,7 @@
         }
 
         const ROBLOX_CDN_SUFFIX = "rbxcdn.com";
+        const THUMBNAILS_PROXY_BASE = `${window.location.origin}${API_BASE}/thumbnails`;
         const HOME_META_IMAGE = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
 
         function buildProxiedCdnUrl(url) {
@@ -209,6 +211,30 @@
                 console.error("Failed to get user ID:", err);
                 return null;
             }
+        }
+
+        async function fetchAvatar3DModelUrl(userId) {
+            const endpoints = [
+                `${THUMBNAILS_PROXY_BASE}/v1/users/avatar-3d?userIds=${userId}`,
+                `https://thumbnails.roblox.com/v1/users/avatar-3d?userIds=${userId}`,
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) continue;
+
+                    const payload = await response.json();
+                    const entry = payload.data?.[0] ?? payload;
+                    if (entry?.imageUrl) {
+                        return buildProxiedCdnUrl(entry.imageUrl);
+                    }
+                } catch (err) {
+                    console.warn("Avatar 3D fetch failed", err);
+                }
+            }
+
+            return null;
         }
 
         function clearUsernamePath() {
@@ -393,19 +419,14 @@
             }
 
             try {
-                const [userRes, groupsRes, friendsRes, avatar3DRes] = await Promise.all([
+                const [userRes, groupsRes, friendsRes] = await Promise.all([
                     fetch(proxyUrl("users", `/v1/users/${userId}`)),
                     fetch(proxyUrl("groups", `/v1/users/${userId}/groups/roles`)),
-                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`)),
-                    fetch(proxyUrl("thumbnails", "/v1/users/avatar-3d", `userIds=${userId}`))
+                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`))
                 ]);
 
                 const user = await userRes.json();
-                const avatar3DData = await avatar3DRes.json();
-                const avatar3DEntry = avatar3DData.data?.[0] ?? avatar3DData;
-                const avatarModelUrl = avatar3DEntry?.imageUrl
-                    ? buildProxiedCdnUrl(avatar3DEntry.imageUrl)
-                    : null;
+                const avatarModelUrl = await fetchAvatar3DModelUrl(userId);
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
