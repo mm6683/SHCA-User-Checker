@@ -130,8 +130,14 @@
     </div>
 
     <script>
+        const API_BASE = "/proxy";
+
+        function proxyUrl(service, path, queryString = "") {
+            const query = queryString ? `?${queryString}` : "";
+            return `${API_BASE}/${service}${path}${query}`;
+        }
+
         const ROBLOX_CDN_SUFFIX = "rbxcdn.com";
-        const THUMBNAILS_PROXY_BASE = `${window.location.origin}/proxy/thumbnails`;
         const HOME_META_IMAGE = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
 
         function buildProxiedCdnUrl(url) {
@@ -151,7 +157,9 @@
 
         async function setFavicon() {
             try {
-                const groupLogoRes = await fetch(`/proxy/thumbnails/v1/groups/icons?groupIds=10275842&size=150x150&format=Png&isCircular=false`);
+                const groupLogoRes = await fetch(
+                    proxyUrl("thumbnails", "/v1/groups/icons", "groupIds=10275842&size=150x150&format=Png&isCircular=false")
+                );
                 const logoData = await groupLogoRes.json();
                 const logoUrl = buildProxiedCdnUrl(logoData.data[0]?.imageUrl);
 
@@ -202,8 +210,7 @@
 
         async function fetchAvatar3DModelUrl(userId) {
             const endpoints = [
-                `${THUMBNAILS_PROXY_BASE}/v1/users/avatar-3d?userIds=${userId}`,
-                `https://thumbnails.roblox.com/v1/users/avatar-3d?userIds=${userId}`,
+                proxyUrl("thumbnails", "/v1/users/avatar-3d", `userIds=${userId}`),
             ];
 
             for (const endpoint of endpoints) {
