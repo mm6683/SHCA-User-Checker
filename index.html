@@ -72,10 +72,11 @@
             gap: 20px;
             margin-bottom: 10px;
         }
-        .profile-header img {
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
+        .profile-header .avatar-3d {
+            width: 140px;
+            height: 140px;
+            border: none;
+            border-radius: 12px;
         }
         .divider {
             margin: 20px auto;
@@ -366,9 +367,7 @@
                 ]);
 
                 const user = await userRes.json();
-                const thumbnail = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`).then(res => res.json());
-                const avatarEntry = thumbnail.data?.[0];
-                const avatarUrl = (avatarEntry?.imageUrl || `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`).replace(/^http:\/\//, "https://");
+                const avatar3DUrl = `https://thumbnails.roblox.com/v1/users/avatar-3d?userId=${userId}`;
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
@@ -445,7 +444,12 @@
 
                 let html = `
                     <div class="profile-header">
-                        <img src="${avatarUrl}">
+                        <iframe
+                            src="${avatar3DUrl}"
+                            title="Avatar 3D preview"
+                            class="avatar-3d"
+                            loading="lazy"
+                        ></iframe>
                         <div>
                             <strong>${user.displayName}</strong><br>
                             <div>@${user.name}</div>
