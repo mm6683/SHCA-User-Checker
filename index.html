@@ -140,7 +140,8 @@
                     return url;
                 }
 
-                return `${window.location.origin}/proxy/cdn${parsed.pathname}${parsed.search}`;
+                const encoded = encodeURIComponent(parsed.toString());
+                return `${window.location.origin}/proxy/cdn?url=${encoded}`;
             } catch {
                 return url;
             }

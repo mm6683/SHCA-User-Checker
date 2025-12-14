@@ -38,6 +38,36 @@ async function handleProxy(request, env) {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
+  if (service === "cdn" && url.searchParams.has("url")) {
+    const rawTarget = url.searchParams.get("url");
+
+    try {
+      const parsedTarget = new URL(rawTarget);
+
+      if (!parsedTarget.hostname.endsWith("rbxcdn.com")) {
+        return new Response("Invalid CDN host", { status: 400, headers: CORS_HEADERS });
+      }
+
+      const outbound = new Request(parsedTarget.toString(), {
+        method: request.method,
+        headers: request.headers,
+        redirect: "follow",
+      });
+
+      const response = await fetch(outbound);
+      const headers = new Headers(response.headers);
+      Object.entries(CORS_HEADERS).forEach(([key, value]) => headers.set(key, value));
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    } catch (err) {
+      return new Response("Failed to proxy CDN resource", { status: 400, headers: CORS_HEADERS });
+    }
+  }
+
   const targetUrl = new URL(`/${rest.join("/")}${url.search}`, TARGETS[service]);
   const outboundInit = {
     method: request.method,
