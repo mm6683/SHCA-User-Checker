@@ -139,6 +139,36 @@
     <script>
         const API_BASE = "/proxy";
 
+        let threeReadyPromise;
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function ensureThree() {
+            if (window.THREE && window.THREE.OrbitControls && window.THREE.MTLLoader && window.THREE.OBJLoader) {
+                return;
+            }
+
+            if (!threeReadyPromise) {
+                const base = "https://cdn.jsdelivr.net/npm/three@0.161.0";
+                threeReadyPromise = (async () => {
+                    if (!window.THREE) await loadScript(`${base}/build/three.min.js`);
+                    if (!window.THREE.OrbitControls) await loadScript(`${base}/examples/js/controls/OrbitControls.js`);
+                    if (!window.THREE.MTLLoader) await loadScript(`${base}/examples/js/loaders/MTLLoader.js`);
+                    if (!window.THREE.OBJLoader) await loadScript(`${base}/examples/js/loaders/OBJLoader.js`);
+                })();
+            }
+
+            return threeReadyPromise;
+        }
+
         function proxyUrl(service, path, queryString = "") {
             const query = queryString ? `?${queryString}` : "";
             return `${API_BASE}/${service}${path}${query}`;
@@ -286,6 +316,8 @@
         async function renderAvatarModel(containerId, modelData) {
             const container = document.getElementById(containerId);
             if (!container || !modelData?.objUrl || !modelData?.mtlUrl) return;
+
+            await ensureThree();
 
             container.innerHTML = "";
 
