@@ -20,6 +20,8 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E"
     >
 
+    <script type="module" src="https://unpkg.com/@google/model-viewer@^3.3.0/dist/model-viewer.min.js"></script>
+
     <style>
         body {
             background-color: #121212;
@@ -77,6 +79,7 @@
             height: 140px;
             border: none;
             border-radius: 12px;
+            background: linear-gradient(145deg, #111, #181818);
         }
         .divider {
             margin: 20px auto;
@@ -133,14 +136,14 @@
             return `${API_BASE}/${service}${path}${query}`;
         }
 
-        const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
+        const ROBLOX_CDN_SUFFIX = "rbxcdn.com";
         const HOME_META_IMAGE = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
 
         function buildProxiedCdnUrl(url) {
             try {
                 const parsed = new URL(url);
 
-                if (parsed.hostname !== ROBLOX_CDN_HOST) {
+                if (!parsed.hostname.endsWith(ROBLOX_CDN_SUFFIX)) {
                     return url;
                 }
 
@@ -389,18 +392,19 @@
             }
 
             try {
-                const [userRes, groupsRes, friendsRes] = await Promise.all([
+                const [userRes, groupsRes, friendsRes, avatar3DRes] = await Promise.all([
                     fetch(proxyUrl("users", `/v1/users/${userId}`)),
                     fetch(proxyUrl("groups", `/v1/users/${userId}/groups/roles`)),
-                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`))
+                    fetch(proxyUrl("friends", `/v1/users/${userId}/friends/count`)),
+                    fetch(proxyUrl("thumbnails", "/v1/users/avatar-3d", `userIds=${userId}`))
                 ]);
 
                 const user = await userRes.json();
-                const avatar3DUrl = proxyUrl(
-                    "thumbnails",
-                    "/v1/users/avatar-3d",
-                    `userId=${userId}`
-                );
+                const avatar3DData = await avatar3DRes.json();
+                const avatar3DEntry = avatar3DData.data?.[0] ?? avatar3DData;
+                const avatarModelUrl = avatar3DEntry?.imageUrl
+                    ? buildProxiedCdnUrl(avatar3DEntry.imageUrl)
+                    : null;
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
@@ -483,14 +487,21 @@
                     return "Just now";
                 }
 
+                const avatarViewer = avatarModelUrl
+                    ? `<model-viewer
+                            src="${avatarModelUrl}"
+                            alt="Avatar 3D preview"
+                            class="avatar-3d"
+                            camera-controls
+                            auto-rotate
+                            disable-zoom
+                            loading="lazy"
+                        ></model-viewer>`
+                    : `<div class="avatar-3d"></div>`;
+
                 let html = `
                     <div class="profile-header">
-                        <iframe
-                            src="${avatar3DUrl}"
-                            title="Avatar 3D preview"
-                            class="avatar-3d"
-                            loading="lazy"
-                        ></iframe>
+                        ${avatarViewer}
                         <div>
                             <strong>${user.displayName}</strong><br>
                             <div>@${user.name}</div>
