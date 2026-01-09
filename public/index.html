@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SHCA User Checker</title>
     <meta name="description" content="A web application for retrieving detailed Roblox user information from public data sources regarding Stone-Haven County Asylum.">
     <meta property="og:title" content="SHCA User Checker">
@@ -19,6 +20,11 @@
         rel="icon"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1e1e'/%3E%3Ctext x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Arial'%3ESH%3C/text%3E%3C/svg%3E"
     >
+
+    <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.161.0/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.161.0/examples/js/loaders/OBJLoader.js"></script>
 
     <style>
         body {
@@ -72,10 +78,16 @@
             gap: 20px;
             margin-bottom: 10px;
         }
-        .profile-header img {
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
+        .profile-header .avatar-3d {
+            width: 140px;
+            height: 140px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #111, #181818);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .divider {
             margin: 20px auto;
@@ -127,23 +139,74 @@
     <script>
         const API_BASE = "/proxy";
 
+        let threeReadyPromise;
+        const THREE_BASES = [
+            "https://unpkg.com/three@0.161.0",
+            "https://cdn.jsdelivr.net/npm/three@0.161.0",
+            "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0"
+        ];
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadThreeDependency(path, checker) {
+            if (checker()) return;
+
+            const errors = [];
+            for (const base of THREE_BASES) {
+                try {
+                    await loadScript(`${base}/${path}`);
+                    return;
+                } catch (err) {
+                    errors.push(err.message);
+                }
+            }
+
+            throw new Error(`Failed to load ${path}: ${errors.join(" | ")}`);
+        }
+
+        async function ensureThree() {
+            if (window.THREE && window.THREE.OrbitControls && window.THREE.MTLLoader && window.THREE.OBJLoader) {
+                return;
+            }
+
+            if (!threeReadyPromise) {
+                threeReadyPromise = (async () => {
+                    await loadThreeDependency("build/three.min.js", () => window.THREE);
+                    await loadThreeDependency("examples/js/controls/OrbitControls.js", () => window.THREE?.OrbitControls);
+                    await loadThreeDependency("examples/js/loaders/MTLLoader.js", () => window.THREE?.MTLLoader);
+                    await loadThreeDependency("examples/js/loaders/OBJLoader.js", () => window.THREE?.OBJLoader);
+                })();
+            }
+
+            return threeReadyPromise;
+        }
+
         function proxyUrl(service, path, queryString = "") {
             const query = queryString ? `?${queryString}` : "";
             return `${API_BASE}/${service}${path}${query}`;
         }
 
-        const ROBLOX_CDN_HOST = "tr.rbxcdn.com";
+        const ROBLOX_CDN_SUFFIX = "rbxcdn.com";
         const HOME_META_IMAGE = "https://raw.githubusercontent.com/mm6683/SHCA-User-Checker/refs/heads/main/public/logo.png";
 
         function buildProxiedCdnUrl(url) {
             try {
                 const parsed = new URL(url);
 
-                if (parsed.hostname !== ROBLOX_CDN_HOST) {
+                if (!parsed.hostname.endsWith(ROBLOX_CDN_SUFFIX)) {
                     return url;
                 }
 
-                return `${window.location.origin}/proxy/cdn${parsed.pathname}${parsed.search}`;
+                const encoded = encodeURIComponent(parsed.toString());
+                return `${window.location.origin}/proxy/cdn?url=${encoded}`;
             } catch {
                 return url;
             }
@@ -203,6 +266,139 @@
             } catch (err) {
                 console.error("Failed to get user ID:", err);
                 return null;
+            }
+        }
+
+        function resolveRobloxCdnUrl(hash) {
+            if (!hash) return null;
+
+            const cleaned = hash.trim();
+            try {
+                const asUrl = new URL(cleaned);
+                return buildProxiedCdnUrl(asUrl.toString());
+            } catch {
+                // Not a full URL, fall back to hash-based host resolution.
+            }
+            const firstHex = (cleaned.match(/[0-9a-fA-F]/) || ["0"])[0];
+            const bucket = parseInt(firstHex, 16) % 8;
+            const cdnUrl = `https://t${bucket}.rbxcdn.com/${cleaned}`;
+            return buildProxiedCdnUrl(cdnUrl);
+        }
+
+        async function fetchAvatar3DModelData(userId) {
+            try {
+                const response = await fetch(proxyUrl("thumbnails", "/v1/users/avatar-3d", `userId=${userId}`));
+                if (!response.ok) return null;
+
+                const payload = await response.json();
+                const entry = payload.data?.[0] ?? payload;
+                if (!entry?.imageUrl) return null;
+
+                const metaRes = await fetch(buildProxiedCdnUrl(entry.imageUrl));
+                if (!metaRes.ok) return null;
+
+                const meta = await metaRes.json();
+                const textures = {};
+
+                (meta.textures || []).forEach(hash => {
+                    textures[hash] = resolveRobloxCdnUrl(hash);
+                });
+
+                return {
+                    objUrl: resolveRobloxCdnUrl(meta.obj),
+                    mtlUrl: resolveRobloxCdnUrl(meta.mtl),
+                    textures,
+                    camera: meta.camera,
+                    aabb: meta.aabb,
+                };
+            } catch (err) {
+                console.warn("Avatar 3D fetch failed", err);
+                return null;
+            }
+        }
+
+        function rewriteMaterialTextures(materialCreator, textures) {
+            if (!materialCreator || !materialCreator.materialsInfo) return;
+
+            Object.values(materialCreator.materialsInfo).forEach(info => {
+                if (info.map_Kd) {
+                    const textureKey = info.map_Kd.replace(/\.[^/.]+$/, "");
+                    const direct = textures[info.map_Kd] || textures[textureKey];
+                    if (direct) {
+                        info.map_Kd = direct;
+                    } else {
+                        info.map_Kd = resolveRobloxCdnUrl(info.map_Kd);
+                    }
+                }
+            });
+        }
+
+        async function renderAvatarModel(containerId, modelData) {
+            const container = document.getElementById(containerId);
+            if (!container || !modelData?.objUrl || !modelData?.mtlUrl) return;
+
+            await ensureThree();
+
+            container.innerHTML = "";
+
+            const width = container.clientWidth || 140;
+            const height = container.clientHeight || 140;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
+
+            if (modelData.camera?.position) {
+                const { x, y, z } = modelData.camera.position;
+                camera.position.set(x, y, z);
+            } else {
+                camera.position.set(0, 0, 2.4);
+            }
+
+            if (modelData.camera?.lookAt) {
+                const { x, y, z } = modelData.camera.lookAt;
+                camera.lookAt(new THREE.Vector3(x, y, z));
+            } else {
+                camera.lookAt(new THREE.Vector3(0, 0.9, 0));
+            }
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1.5, 2, 1.5);
+            scene.add(ambientLight, directionalLight);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = false;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 1.2;
+
+            const loadingManager = new THREE.LoadingManager();
+            const mtlLoader = new THREE.MTLLoader(loadingManager);
+            const objLoader = new THREE.OBJLoader(loadingManager);
+
+            try {
+                const mtlText = await fetch(modelData.mtlUrl).then(res => res.text());
+                const materials = mtlLoader.parse(mtlText, "");
+                rewriteMaterialTextures(materials, modelData.textures);
+                materials.preload();
+
+                objLoader.setMaterials(materials);
+                const object = await objLoader.loadAsync(modelData.objUrl);
+                scene.add(object);
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    controls.update();
+                    renderer.render(scene, camera);
+                };
+
+                animate();
+            } catch (err) {
+                console.warn("Unable to render avatar model", err);
             }
         }
 
@@ -395,15 +591,7 @@
                 ]);
 
                 const user = await userRes.json();
-                const thumbnail = await fetch(
-                    proxyUrl(
-                        "thumbnails",
-                        "/v1/users/avatar-headshot",
-                        `userIds=${userId}&size=150x150&format=Png&isCircular=true`
-                    )
-                ).then(res => res.json());
-                const avatarEntry = thumbnail.data?.[0];
-                const avatarUrl = (avatarEntry?.imageUrl || `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`).replace(/^http:\/\//, "https://");
+                const avatarModelData = await fetchAvatar3DModelData(userId);
 
                 const groupData = (await groupsRes.json()).data;
                 const friendCount = (await friendsRes.json()).count;
@@ -486,9 +674,12 @@
                     return "Just now";
                 }
 
+                const avatarContainerId = `avatar-viewer-${user.id}`;
+                const avatarViewer = `<div id="${avatarContainerId}" class="avatar-3d"></div>`;
+
                 let html = `
                     <div class="profile-header">
-                        <img src="${avatarUrl}">
+                        ${avatarViewer}
                         <div>
                             <strong>${user.displayName}</strong><br>
                             <div>@${user.name}</div>
@@ -689,6 +880,10 @@
                 }
 
                 result.innerHTML = html;
+
+                if (avatarModelData) {
+                    renderAvatarModel(avatarContainerId, avatarModelData);
+                }
 
                 const targetPath = `/userid/${userId}`;
                 if (window.location.pathname !== targetPath) {
