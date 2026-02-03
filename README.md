@@ -1,6 +1,7 @@
 # Stone-Haven County Asylum User Checker
 # THIS PROJECT IS DEPRECATED
 This Project is deprecated and will no longer get updates, nor will it be funded anymore. This is because SHCA Chairman denied the tool, and I shifted the project to Silverpine Research Labs. https://github.com/mm6683/SRL-User-Checker
+
 **https://shca-user-checker.com/**
 
 The **Stone-Haven County Asylum User Checker** is a browser-based administrative tool designed to streamline background checks and user lookups for SHCA MR+, Moderation, and other authorized staff.  
